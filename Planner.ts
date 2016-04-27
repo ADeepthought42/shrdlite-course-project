@@ -82,6 +82,7 @@ module Planner {
         var plan : string[] = [];
 
         // First move the arm to the leftmost nonempty stack
+        //Hej
         if (pickstack < state.arm) {
             plan.push("Moving left");
             for (var i = state.arm; i > pickstack; i--) {
