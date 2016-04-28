@@ -55,11 +55,36 @@ function aStarSearch<Node> (
     heuristics : (n:Node) => number,
     timeout : number
 ) : SearchResult<Node> {
+    var endTime = Date.now() + (timeout * 1000);
     // A dummy search result: it just picks the first possible neighbour
     var result : SearchResult<Node> = {
         path: [start],
         cost: 0
     };
+
+    if(heuristics(start)==0){
+         //do something to
+    }
+    if(goal(start)){
+        // already at goal
+        return result;
+    }
+
+    // would not work, need to think about this..
+    var prio : collections.PriorityQueue<Edge> = collections.PriorityQueue<Edge> (
+            (a,b) => (graph.compareNodes(a,b) > graph.compareNodes(b,a)) ? -1 :
+                ((graph.compareNodes(a,b) == graph.compareNodes(b,a)) ? 0 : 1)
+//            (a,b) => (heuristics(a.to) < heuristics(b.to)) ? -1 : ((heuristics(a.to) == heuristics(b.to)) ? 0 : 1)
+        );
+
+    current : Node = start;
+    while(!goal(current) && (Date.now() < endTime)){
+        for (edge of graph.outgoingEdges(current)) {
+            if (edge.to != current){
+
+            }
+        }
+    }
     while (result.path.length < 3) {
         var edge : Edge<Node> = graph.outgoingEdges(start) [0];
         if (! edge) break;
