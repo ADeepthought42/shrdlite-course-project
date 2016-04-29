@@ -70,16 +70,20 @@ function aStarSearch<Node> (
         return result;
     }
     // would not work, need to think about this..
-    var prio : collections.PriorityQueue<Edge> = collections.PriorityQueue<Edge> (
-        (a,b) => (graph.compareNodes(a,b) > graph.compareNodes(b,a)) ? -1 :
-                ((graph.compareNodes(a,b) == graph.compareNodes(b,a)) ? 0 : 1)
-//            (a,b) => (heuristics(a.to) < heuristics(b.to)) ? -1 : ((heuristics(a.to) == heuristics(b.to)) ? 0 : 1)
-        );
-
-    current : Node = start;
+    // var current : Node = start;
     // work until goal is reached or time is up
+    var prospects : collections.PriorityQueue<Edge<Node>> = new collections.PriorityQueue<Edge<Node>> (
+        (a,b) => (heuristics(a.to) < heuristics(b.to)) ? 1 : ((heuristics(a.to) == heuristics(b.to)) ? 0 : -1));
+    var visited : collections.Set<Edge<Node>> = new collections.Set<Edge<Node>>();
+
+    for (var edge of graph.outgoingEdges(start)){
+        prospects.enqueue(edge);
+    }
+    var current : Node = prospects.peek().to;
+    visited.add(prospects.dequeue());
     while(!goal(current) && (Date.now() < endTime)) {
-        for (edge of graph.outgoingEdges(current)) {
+        for (var edge of graph.outgoingEdges(current)) {
+            prospects.enqueue( edge );
             /*
             if (edge.to in previous result){
                 check cost between results and switch if better.
@@ -88,6 +92,11 @@ function aStarSearch<Node> (
             }
             */
         }
+        while(visited.contains(prospects.peek())){
+            prospects.dequeue();
+        }
+        var tmp : Edge<Node> = prospects.dequeue();
+        visited.add(tmp);
     }
 
     return result;
