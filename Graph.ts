@@ -104,7 +104,7 @@ function aStarSearch<Node> (
 
         var edges = graph.outgoingEdges(currentNode);
 
-        for(var i ; i < edges.length ; i++){
+        for(var i : number ; i < edges.length ; i++){
             
             var neighbour = edges[i];
             var res : SearchResult<Node> = result;
@@ -132,7 +132,7 @@ function aStarSearch<Node> (
         }
     }
 
-
+    return result;
 }
 
 
