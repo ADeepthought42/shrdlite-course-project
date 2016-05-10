@@ -109,25 +109,78 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         
     	var objects : string[] = Array.prototype.concat.apply([], state.stacks);
     	var interpretation : DNFFormula = null;
-    	var objectIDs : string[] = [];
+    	var srcObj : string = "";
+    	var dstObj : string = "";
 
-		var objForm : string = cmd.entity.object.form;
-		var objColor : string = cmd.entity.object.color;
-		var objSize : string = cmd.entity.object.size;
+
+		var loc = cmd.location;
+		var objForm = cmd.entity.object.form;
+		var	objColor = cmd.entity.object.color;
+		var	objSize = cmd.entity.object.size;
+		var locObjForm = loc.entity.object.form;
+		var locObjColor = loc.entity.object.color;
+		var locObjSize = loc.entity.object.size;
+
 		if(cmd.command == "take"){
 			for (var i = 0; i < objects.length; i++) {
 				var obj : ObjectDefinition = state.objects[objects[i]];
 				if ((objForm == obj.form || objForm == null) &&
 					(objColor == obj.color || objColor == null) &&
 					(objSize == obj.size || objSize == null)){
-					objectIDs.push(objects[i]);
+					srcObj = objects[i];
 				}
 				else
 					interpretation = [];
 					return interpretation;
 			}
-			interpretation = [[{polarity: true, relation: "holding", args: [objectIDs[0]]}]]
+			interpretation = [[{polarity: true, relation: "holding", args: [srcObj]}]];
+			return interpretation;
 		}
+		else if(cmd.command == "put"){
+			for (var i = 0; i < objects.length; i++) {
+				var obj : ObjectDefinition = state.objects[objects[i]];
+				if ((locObjForm == obj.form || locObjForm == null) &&
+					(locObjColor == obj.color || locObjColor == null) &&
+					(locObjSize == obj.size || locObjSize == null)){
+					dstObj = objects[i];
+				}
+				else
+					interpretation = [];
+					return interpretation;
+			}
+			interpretation = [[{polarity: true, relation: loc.relation, args: [state.holding, dstObj]}]];
+			return interpretation;
+		}
+
+		else if (cmd.command == "move"){
+			for (var i = 0; i < objects.length; i++) {
+				var obj : ObjectDefinition = state.objects[objects[i]];
+				if ((objForm == obj.form || objForm == null) &&
+					(objColor == obj.color || objColor == null) &&
+					(objSize == obj.size || objSize == null)){
+					srcObj = objects[i];
+				}
+				else
+					interpretation = [];
+					return interpretation;
+			}
+			for (var i = 0; i < objects.length; i++) {
+				var obj : ObjectDefinition = state.objects[objects[i]];
+				if ((locObjForm == obj.form || locObjForm == null) &&
+					(locObjColor == obj.color || locObjColor == null) &&
+					(locObjSize == obj.size || locObjSize == null)){
+					dstObj = objects[i];
+				}
+				else
+					interpretation = [];
+					return interpretation;
+				}
+			}
+			interpretation = [[{polarity: true, relation: loc.relation, args: [srcObj, dstObj]}]];
+			return interpretation;
+		}
+
+		return null;
 
 
 		
