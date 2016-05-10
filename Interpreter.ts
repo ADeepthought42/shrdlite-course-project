@@ -106,15 +106,45 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
      * @returns A list of list of Literal, representing a formula in disjunctive normal form (disjunction of conjunctions). See the dummy interpetation returned in the code for an example, which means ontop(a,floor) AND holding(b).
      */
     function interpretCommand(cmd : Parser.Command, state : WorldState) : DNFFormula {
+        
+    	var objects : string[] = Array.prototype.concat.apply([], state.stacks);
+    	var interpretation : DNFFormula = null;
+    	var objectIDs : string[] = [];
+
+		var objForm : string = cmd.entity.object.form;
+		var objColor : string = cmd.entity.object.color;
+		var objSize : string = cmd.entity.object.size;
+		if(cmd.command == "take"){
+			for (var i = 0; i < objects.length; i++) {
+				var obj : ObjectDefinition = state.objects[objects[i]];
+				if ((objForm == obj.form || objForm == null) &&
+					(objColor == obj.color || objColor == null) &&
+					(objSize == obj.size || objSize == null)){
+					objectIDs.push(objects[i]);
+				}
+				else
+					interpretation = [];
+					return interpretation;
+			}
+			interpretation = [[{polarity: true, relation: "holding", args: [objectIDs[0]]}]]
+		}
+
+
+		
+
+
         // This returns a dummy interpretation involving two random objects in the world
+        /*
         var objects : string[] = Array.prototype.concat.apply([], state.stacks);
         var a : string = objects[Math.floor(Math.random() * objects.length)];
         var b : string = objects[Math.floor(Math.random() * objects.length)];
         var interpretation : DNFFormula = [[
             {polarity: true, relation: "ontop", args: [a, "floor"]},
             {polarity: true, relation: "holding", args: [b]}
+
         ]];
         return interpretation;
+        */
     }
 
 }
