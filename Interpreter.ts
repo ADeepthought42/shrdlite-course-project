@@ -113,19 +113,11 @@ possible parse of the command. No need to change this one.
      */
     function interpretCommand(cmd : Parser.Command, state : WorldState) : DNFFormula {
 
-    	var objects : string[] = Array.prototype.concat.apply([], state.stacks);
     	var interpretation : DNFFormula = null;
     	var srcObj : string = "";
     	var dstObj : string = "";
 
-
 		var loc = cmd.location;
-		var objForm = cmd.entity.object.form;
-		var	objColor = cmd.entity.object.color;
-		var	objSize = cmd.entity.object.size;
-		var locObjForm = loc.entity.object.form;
-		var locObjColor = loc.entity.object.color;
-		var locObjSize = loc.entity.object.size;
 
 		if(cmd.command == "take"){
 			srcObj = objectInObjects(cmd.entity, state);
