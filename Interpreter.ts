@@ -148,7 +148,8 @@ possible parse of the command. No need to change this one.
 
             for(var i = 0 ; i < srcObjs.length ; i++){
             	for(var j = 0 ; j < dstObjs.length ; j++){
-				interpretation.push([{polarity: true, relation: loc.relation, args: [srcObjs[i], dstObjs[j]]}]);
+					interpretation.push([{polarity: true, relation: loc.relation, args: [srcObjs[i], dstObjs[j]]}]);
+				}
 			}
 			return interpretation;
 		}
