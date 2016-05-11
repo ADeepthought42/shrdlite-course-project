@@ -129,14 +129,18 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
 					(objSize == obj.size || objSize == null)){
 					srcObj = objects[i];
 				}
-				else
-					interpretation = [];
-					return interpretation;
+				
 			}
+            if(srcObj == null){
+			    interpretation = null;
+				return interpretation;
+            }
 			interpretation = [[{polarity: true, relation: "holding", args: [srcObj]}]];
 			return interpretation;
 		}
 		else if(cmd.command == "put"){
+            if(locObjForm == "floor")
+                dstObj = "floor";
 			for (var i = 0; i < objects.length; i++) {
 				var obj : ObjectDefinition = state.objects[objects[i]];
 				if ((locObjForm == obj.form || locObjForm == null) &&
@@ -144,10 +148,12 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
 					(locObjSize == obj.size || locObjSize == null)){
 					dstObj = objects[i];
 				}
-				else
-					interpretation = [];
-					return interpretation;
+
 			}
+            if(dstObj == null){
+				interpretation = null;
+				return interpretation;
+            }
 			interpretation = [[{polarity: true, relation: loc.relation, args: [state.holding, dstObj]}]];
 			return interpretation;
 		}
@@ -160,10 +166,12 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
 					(objSize == obj.size || objSize == null)){
 					srcObj = objects[i];
 				}
-				else
-					interpretation = [];
-					return interpretation;
 			}
+            if(srcObj == null){
+				interpretation = null;
+				return interpretation;
+            }
+
 			for (var i = 0; i < objects.length; i++) {
 				var obj : ObjectDefinition = state.objects[objects[i]];
 				if ((locObjForm == obj.form || locObjForm == null) &&
@@ -171,12 +179,12 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
 					(locObjSize == obj.size || locObjSize == null)){
 					dstObj = objects[i];
 				}
-				else
-					interpretation = [];
-					return interpretation;
-				}
 			}
-			interpretation = [[{polarity: true, relation: loc.relation, args: [srcObj, dstObj]}]];
+            if(dstObj == null){
+				interpretation = null;
+				return interpretation;
+            }
+			interpretation = [[{polarity: true, relation: "holding", args: ["m"]}]];
 			return interpretation;
 		}
 
