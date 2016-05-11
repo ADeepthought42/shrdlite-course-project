@@ -30,7 +30,8 @@ module Parser {
             throw new Error('Parsing failed, incomplete input');
         }
         return results.map((res) => {
-            // We need to clone the parse result, because parts of it is shared with other parses
+            /* We need to clone the parse result, because parts of it is shared
+            with other parses*/
             return {input: input, parse: clone(res)};
         });
     }
@@ -48,13 +49,14 @@ module Parser {
     export interface Command {
 	/** The verb itself, for example "move", "take", "drop" */
         command : string;
-	/** The object in the world, i.e. the `Entity`, which is the patient/direct object of `command`. */
+	/** The object in the world, i.e. the `Entity`, which is the patient/direct
+      object of `command`. */
         entity? : Entity;
 	/** For verbs of motion, this specifies the destination of the action. */
         location? : Location;
     }
 
-    /** A quantified reference (as yet uninterpreted) to an object in the world. */
+  /** A quantified reference (as yet uninterpreted) to an object in the world. */
     export interface Entity {
 	/** Specifies a determiner (e.g. "the", "a/an", "any", "all"). */
         quantifier : string;
@@ -69,7 +71,7 @@ module Parser {
         entity : Entity;
     }
 
-    /** 
+    /**
      * A user's description of an object in the world. A basic object
      * is described by its size ("small", "large", etc.), color
      * ("black", "white", etc.) and form ("object", "ball", "box",
@@ -82,7 +84,7 @@ module Parser {
      * support that. Instead, we include all possible fields and
      * assume that if `object?` and `location?` are set, the others
      * will be undefined and vice versa.
-     * 
+     *
      */
     export interface Object {
 	/** Recursive reference to an object using a relative clause. */
@@ -134,5 +136,3 @@ if (typeof require !== 'undefined') {
     var nearley = require('./lib/nearley.js');
     var grammar = require('./grammar.js');
 }
-
-

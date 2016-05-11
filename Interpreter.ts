@@ -3,12 +3,12 @@
 
 /**
 * Interpreter module
-* 
+*
 * The goal of the Interpreter module is to interpret a sentence
 * written by the user in the context of the current world state. In
 * particular, it must figure out which objects in the world,
 * i.e. which elements in the `objects` field of WorldState, correspond
-* to the ones referred to in the sentence. 
+* to the ones referred to in the sentence.
 *
 * Moreover, it has to derive what the intended goal state is and
 * return it as a logical formula described in terms of literals, where
@@ -30,12 +30,15 @@ module Interpreter {
     // exported functions, classes and interfaces/types
 
 /**
-Top-level function for the Interpreter. It calls `interpretCommand` for each possible parse of the command. No need to change this one.
+Top-level function for the Interpreter. It calls `interpretCommand` for each
+possible parse of the command. No need to change this one.
 * @param parses List of parses produced by the Parser.
 * @param currentState The current state of the world.
-* @returns Augments ParseResult with a list of interpretations. Each interpretation is represented by a list of Literals.
-*/    
-    export function interpret(parses : Parser.ParseResult[], currentState : WorldState) : InterpretationResult[] {
+* @returns Augments ParseResult with a list of interpretations. Each
+  interpretation is represented by a list of Literals.
+*/
+    export function interpret(parses : Parser.ParseResult[],
+        currentState : WorldState) : InterpretationResult[] {
         var errors : Error[] = [];
         var interpretations : InterpretationResult[] = [];
         parses.forEach((parseresult) => {
@@ -76,7 +79,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         polarity : boolean;
 	/** The name of the relation in question. */
         relation : string;
-	/** The arguments to the relation. Usually these will be either objects 
+	/** The arguments to the relation. Usually these will be either objects
      * or special strings such as "floor" or "floor-N" (where N is a column) */
         args : string[];
     }
@@ -101,12 +104,15 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
      * connected to `cmd`, but your version of the function should
      * analyse cmd in order to figure out what interpretation to
      * return.
-     * @param cmd The actual command. Note that it is *not* a string, but rather an object of type `Command` (as it has been parsed by the parser).
+     * @param cmd The actual command. Note that it is *not* a string, but rather
+      an object of type `Command` (as it has been parsed by the parser).
      * @param state The current state of the world. Useful to look up objects in the world.
-     * @returns A list of list of Literal, representing a formula in disjunctive normal form (disjunction of conjunctions). See the dummy interpetation returned in the code for an example, which means ontop(a,floor) AND holding(b).
+     * @returns A list of list of Literal, representing a formula in disjunctive
+     normal form (disjunction of conjunctions). See the dummy interpetation returned in the
+     code for an example, which means ontop(a,floor) AND holding(b).
      */
     function interpretCommand(cmd : Parser.Command, state : WorldState) : DNFFormula {
-        
+
     	var objects : string[] = Array.prototype.concat.apply([], state.stacks);
     	var interpretation : DNFFormula = null;
     	var srcObj : string = "";
@@ -129,7 +135,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
 					(objSize == obj.size || objSize == null)){
 					srcObj = objects[i];
 				}
-				
+
 			}
             if(srcObj == null){
 			    interpretation = null;
@@ -154,7 +160,8 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
 				interpretation = null;
 				return interpretation;
             }
-			interpretation = [[{polarity: true, relation: loc.relation, args: [state.holding, dstObj]}]];
+			interpretation = [[{polarity: true, relation: loc.relation,
+        args: [state.holding, dstObj]}]];
 			return interpretation;
 		}
 
@@ -191,7 +198,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
 		return null;
 
 
-		
+
 
 
         // This returns a dummy interpretation involving two random objects in the world
@@ -209,4 +216,3 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
     }
 
 }
-
