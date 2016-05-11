@@ -122,18 +122,16 @@ possible parse of the command. No need to change this one.
 		if(cmd.command === "take"){
 			srcObjs = findObject(cmd.entity, state);
 
+      if(!srcObjs.length) return null;
 
-            if(!srcObjs.length) return null;
-
-            for(var i = 0 ; i < srcObjs.length ; i++){
-			    interpretation.push([{polarity: true, relation: "holding", args: [srcObjs[i]]}]);
-            }
+      for(var i = 0 ; i < srcObjs.length ; i++)
+    		interpretation.push([{polarity: true, relation: "holding", args: [srcObjs[i]]}]);
 
 		}
 		else if(cmd.command === "put"){
 			dstObjs = findObject(cmd.location.entity, state);
 
-            if(!dstObjs.length) return null;
+      if(!dstObjs.length) return null;
 
 			interpretation = [[{polarity: true, relation: loc.relation,
 				args: [state.holding, dstObjs[0]]}]];
@@ -142,20 +140,17 @@ possible parse of the command. No need to change this one.
 		else if (cmd.command === "move"){
 			srcObjs = findObject(cmd.entity, state);
 
-            if(!srcObjs.length) return null;
+      if(!srcObjs.length) return null;
 
 			dstObjs = findObject(cmd.location.entity, state);
 
-            if(!dstObjs.length) return null;
+      if(!dstObjs.length) return null;
 
-      for(var i = 0 ; i < srcObjs.length ; i++) {
-      	for(var j = 0 ; j < dstObjs.length ; j++) {
-          if(srcObjs[i] !== dstObjs[j]){
+      for(var i = 0 ; i < srcObjs.length ; i++) 
+      	for(var j = 0 ; j < dstObjs.length ; j++)
+          if(srcObjs[i] !== dstObjs[j])
 						interpretation.push([{polarity: true, relation: loc.relation,
 							args: [srcObjs[i], dstObjs[j]]}]);
-					}
-				}
-			}
 		}
     return interpretation;
 
