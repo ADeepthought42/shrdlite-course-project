@@ -133,7 +133,7 @@ possible parse of the command. No need to change this one.
       if(!dstObjs.length) return null;
 
       interpretation = [[{polarity: true, relation: loc.relation,
-        args: [state.holding, dstObjs[0]]}]];
+       args: [state.holding, dstObjs[0]]}]];
     }
 
     else if (cmd.command === "move"){
@@ -145,13 +145,13 @@ possible parse of the command. No need to change this one.
 
       if(!dstObjs.length) return null;
 
-        for(var i = 0 ; i < srcObjs.length ; i++)
-          for(var j = 0 ; j < dstObjs.length ; j++)
-            if(srcObjs[i] !== dstObjs[j])
+      for(var i = 0 ; i < srcObjs.length ; i++)
+        for(var j = 0 ; j < dstObjs.length ; j++)
+          if(srcObjs[i] !== dstObjs[j])
             interpretation.push([{polarity: true, relation: loc.relation,
-              args: [srcObjs[i], dstObjs[j]]}]);
+             args: [srcObjs[i], dstObjs[j]]}]);
     }
-        return interpretation;
+    return interpretation;
 
     // Goes through the list of objects and returns the one matching the arguments.
     //If there is no match it returns an empty string.
@@ -165,9 +165,10 @@ possible parse of the command. No need to change this one.
       if(objForm === "floor")
         objects.push("floor");
 
-      if(state.holding !== null)
+      if(state.holding)
         objects.push(state.holding);
 
+      // Filter out all the objects that do not match the given descriptons
       return objects.filter(function(y) {
         var x : ObjectDefinition = state.objects[y];
         return ((objForm === x.form || objForm === 'anyform') &&
