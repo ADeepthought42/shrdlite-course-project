@@ -146,7 +146,7 @@ possible parse of the command. No need to change this one.
 
             if(!dstObj) return null;
 
-			interpretation = [[{polarity: true, relation: "holding", args: [srcObj, dstObj]}]];
+			interpretation = [[{polarity: true, relation: loc.relation, args: [srcObj, dstObj]}]];
 			return interpretation;
 		}
 
