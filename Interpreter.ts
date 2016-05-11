@@ -151,8 +151,8 @@ possible parse of the command. No need to change this one.
 		}
 
 		return null;
-
-
+		// Goes through the list of objects and returns the one matching the arguments. 
+		//If there is no match it returns an empty string.  
 		function findObject(entity : Parser.Entity, state : WorldState) : string {
 			var objForm = entity.object.form;
 			var	objColor = entity.object.color;
