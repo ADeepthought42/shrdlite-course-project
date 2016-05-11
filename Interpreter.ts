@@ -119,7 +119,7 @@ possible parse of the command. No need to change this one.
     var loc = cmd.location;
 
     if(cmd.command === "take"){
-      srcObjs = findObject(cmd.entity, state);
+      srcObjs = findObjects(cmd.entity, state);
 
       if(!srcObjs.length) return null;
 
@@ -128,7 +128,7 @@ possible parse of the command. No need to change this one.
 
     }
     else if(cmd.command === "put"){
-      dstObjs = findObject(cmd.location.entity, state);
+      dstObjs = findObjects(cmd.location.entity, state);
 
       if(!dstObjs.length) return null;
 
@@ -137,11 +137,11 @@ possible parse of the command. No need to change this one.
     }
 
     else if (cmd.command === "move"){
-      srcObjs = findObject(cmd.entity, state);
+      srcObjs = findObjects(cmd.entity, state);
 
       if(!srcObjs.length) return null;
 
-      dstObjs = findObject(cmd.location.entity, state);
+      dstObjs = findObjects(cmd.location.entity, state);
 
       if(!dstObjs.length) return null;
 
@@ -153,9 +153,9 @@ possible parse of the command. No need to change this one.
     }
     return interpretation;
 
-    // Goes through the list of objects and returns the one matching the arguments.
+    // Goes through the list of objects and returns the ones matching the arguments.
     //If there is no match it returns an empty string.
-    function findObject(entity : Parser.Entity, state : WorldState) : string[] {
+    function findObjects(entity : Parser.Entity, state : WorldState) : string[] {
       var objForm = entity.object.form;
       var	objColor = entity.object.color;
       var	objSize = entity.object.size;
