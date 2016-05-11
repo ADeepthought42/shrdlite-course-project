@@ -122,39 +122,41 @@ possible parse of the command. No need to change this one.
 		if(cmd.command == "take"){
 			srcObjs = findObject(cmd.entity, state);
 
-            if(!srcObjs) return null;
+            if(!srcObjs.length) return null;
 
 			interpretation = [[{polarity: true, relation: "holding", args: [srcObjs[0]]}]];
-			return interpretation;
+			//return interpretation;
 		}
 		else if(cmd.command == "put"){
 			dstObjs = findObject(cmd.location.entity, state);
 
-            if(!dstObjs) return null;
+            if(!dstObjs.length) return null;
 
 			interpretation = [[{polarity: true, relation: loc.relation,
 				args: [state.holding, dstObjs[0]]}]];
-			return interpretation;
+			//return interpretation;
 		}
 
 		else if (cmd.command == "move"){
 			srcObjs = findObject(cmd.entity, state);
 
-            if(!srcObjs) return null;
+            if(!srcObjs.length) return null;
 
 			dstObjs = findObject(cmd.location.entity, state);
 
-            if(!dstObjs) return null;
+            if(!dstObjs.length) return null;
 
-            for(var i = 0 ; i < srcObjs.length ; i++){
-            	for(var j = 0 ; j < dstObjs.length ; j++){
-					interpretation.push([{polarity: true, relation: loc.relation, args: [srcObjs[i], dstObjs[j]]}]);
+      for(var i = 0 ; i < srcObjs.length ; i++) {
+      	for(var j = 0 ; j < dstObjs.length ; j++) {
+					interpretation.push([{polarity: true,
+            relation: loc.relation, args: [srcObjs[i], dstObjs[j]]}]);
 				}
 			}
-			return interpretation;
+			//return interpretation;
 		}
+    return interpretation;
+		//return null;
 
-		return null;
 		// Goes through the list of objects and returns the one matching the arguments.
 		//If there is no match it returns an empty string.
 		function findObject(entity : Parser.Entity, state : WorldState) : string[] {
@@ -162,17 +164,17 @@ possible parse of the command. No need to change this one.
 			var	objColor = entity.object.color;
 			var	objSize = entity.object.size;
 
-			var objs : string[] = [];
+	//		var objs : string[] = [];
 
 			var objects : string[] = Array.prototype.concat.apply([], state.stacks);
 
 			if(objForm == "floor")
-				objs.push("floor");
+				objects.push("floor");
 
 			if(state.holding != null)
 				objects.push(state.holding);
 
-
+/*
 			for (var i = 0; i < objects.length; i++) {
 				var object : ObjectDefinition = state.objects[objects[i]];
 				if ((objForm == object.form || objForm == 'anyform') &&
@@ -183,10 +185,19 @@ possible parse of the command. No need to change this one.
 
 			}
             return objs;
+*/
 
+      return objects.filter(function(y) {
+        var x : ObjectDefinition = state.objects[y];
+        return ((objForm == x.form || objForm == 'anyform') &&
+        (objColor == x.color || objColor == null) &&
+        (objSize == x.size || objSize == null))
+      });
 
 
 		}
+
+
 
 
         // This returns a dummy interpretation involving two random objects in the world
