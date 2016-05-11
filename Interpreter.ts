@@ -114,56 +114,59 @@ possible parse of the command. No need to change this one.
     function interpretCommand(cmd : Parser.Command, state : WorldState) : DNFFormula {
 
     	var interpretation : DNFFormula = null;
-    	var srcObj : string = "";
-    	var dstObj : string = "";
+    	var srcObjs : string[] = [];
+    	var dstObjs : string[] = [];
 
 		var loc = cmd.location;
 
 		if(cmd.command == "take"){
-			srcObj = findObject(cmd.entity, state);
+			srcObjs = findObject(cmd.entity, state);
 
-            if(!srcObj) return null;
+            if(!srcObjs) return null;
 
-			interpretation = [[{polarity: true, relation: "holding", args: [srcObj]}]];
+			interpretation = [[{polarity: true, relation: "holding", args: [srcObjs[0]]}]];
 			return interpretation;
 		}
 		else if(cmd.command == "put"){
-			dstObj = findObject(cmd.location.entity, state);
+			dstObjs = findObject(cmd.location.entity, state);
 
-            if(!dstObj) return null;
+            if(!dstObjs) return null;
 
 			interpretation = [[{polarity: true, relation: loc.relation,
-				args: [state.holding, dstObj]}]];
+				args: [state.holding, dstObjs[0]]}]];
 			return interpretation;
 		}
 
 		else if (cmd.command == "move"){
-			srcObj = findObject(cmd.entity, state);
+			srcObjs = findObject(cmd.entity, state);
 
-            if(!srcObj) return null;
+            if(!srcObjs) return null;
 
-			dstObj = findObject(cmd.location.entity, state);
+			dstObjs = findObject(cmd.location.entity, state);
 
-            if(!dstObj) return null;
+            if(!dstObjs) return null;
 
-			interpretation = [[{polarity: true, relation: loc.relation, args: [srcObj, dstObj]}]];
+            for(var i = 0 ; i < srcObjs.length ; i++){
+            	for(var j = 0 ; j < dstObjs.length ; j++){
+				interpretation.push([{polarity: true, relation: loc.relation, args: [srcObjs[i], dstObjs[j]]}]);
+			}
 			return interpretation;
 		}
 
 		return null;
 		// Goes through the list of objects and returns the one matching the arguments.
 		//If there is no match it returns an empty string.
-		function findObject(entity : Parser.Entity, state : WorldState) : string {
+		function findObject(entity : Parser.Entity, state : WorldState) : string[] {
 			var objForm = entity.object.form;
 			var	objColor = entity.object.color;
 			var	objSize = entity.object.size;
 
-			var obj : string = "";
+			var objs : string[] = [];
 
 			var objects : string[] = Array.prototype.concat.apply([], state.stacks);
 
 			if(objForm == "floor")
-				return "floor";
+				objs.push("floor");
 
 			if(state.holding != null)
 				objects.push(state.holding);
@@ -174,11 +177,11 @@ possible parse of the command. No need to change this one.
 				if ((objForm == object.form || objForm == 'anyform') &&
 					(objColor == object.color || objColor == null) &&
 					(objSize == object.size || objSize == null)){
-					obj = objects[i];
+					objs.push(objects[i]);
 				}
 
 			}
-            return obj;
+            return objs;
 
 
 
