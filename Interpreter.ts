@@ -115,13 +115,13 @@ possible parse of the command. No need to change this one.
     var interpretation : DNFFormula = null;
     var srcObjs : string[] = [];
     var dstObjs : string[] = [];
-
     var loc = cmd.location;
 
     if(cmd.command === "take"){
       srcObjs = findObjects(cmd.entity, state);
 
-      if(!srcObjs.length) return null;
+      if(!srcObjs.length) 
+        return null;
 
       for(var i = 0 ; i < srcObjs.length ; i++)
         interpretation.push([{polarity: true, relation: "holding", args: [srcObjs[i]]}]);
@@ -130,7 +130,8 @@ possible parse of the command. No need to change this one.
     else if(cmd.command === "put"){
       dstObjs = findObjects(cmd.location.entity, state);
 
-      if(!dstObjs.length) return null;
+      if(!dstObjs.length) 
+        return null;
 
       interpretation = [[{polarity: true, relation: loc.relation,
        args: [state.holding, dstObjs[0]]}]];
@@ -139,11 +140,13 @@ possible parse of the command. No need to change this one.
     else if (cmd.command === "move"){
       srcObjs = findObjects(cmd.entity, state);
 
-      if(!srcObjs.length) return null;
+      if(!srcObjs.length) 
+        return null;
 
       dstObjs = findObjects(cmd.location.entity, state);
 
-      if(!dstObjs.length) return null;
+      if(!dstObjs.length) 
+        return null;
 
       for(var i = 0 ; i < srcObjs.length ; i++)
         for(var j = 0 ; j < dstObjs.length ; j++)
@@ -159,7 +162,6 @@ possible parse of the command. No need to change this one.
       var objForm = entity.object.form;
       var	objColor = entity.object.color;
       var	objSize = entity.object.size;
-
       var objects : string[] = Array.prototype.concat.apply([], state.stacks);
 
       if(objForm === "floor")
@@ -172,12 +174,9 @@ possible parse of the command. No need to change this one.
       return objects.filter(function(y) {
         var x : ObjectDefinition = state.objects[y];
         return ((objForm === x.form || objForm === 'anyform') &&
-        (objColor === x.color || objColor === null) &&
-        (objSize === x.size || objSize === null))
+         (objColor === x.color || objColor === null) &&
+         (objSize === x.size || objSize === null))
       });
-
-
     }
   }
-
 }
