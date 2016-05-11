@@ -122,7 +122,7 @@ possible parse of the command. No need to change this one.
 		if(cmd.command == "take"){
 			srcObj = findObject(cmd.entity, state);
 
-            if(srcObj) return null;
+            if(!srcObj) return null;
 
 			interpretation = [[{polarity: true, relation: "holding", args: [srcObj]}]];
 			return interpretation;
@@ -130,7 +130,7 @@ possible parse of the command. No need to change this one.
 		else if(cmd.command == "put"){
 			dstObj = findObject(cmd.location.entity, state);
 
-            if(dstObj) return null;
+            if(!dstObj) return null;
 
 			interpretation = [[{polarity: true, relation: loc.relation,
 				args: [state.holding, dstObj]}]];
@@ -140,19 +140,19 @@ possible parse of the command. No need to change this one.
 		else if (cmd.command == "move"){
 			srcObj = findObject(cmd.entity, state);
 
-            if(srcObj)return null;
+            if(!srcObj) return null;
 
 			dstObj = findObject(cmd.location.entity, state);
 
-            if(dstObj) return null;
+            if(!dstObj) return null;
 
 			interpretation = [[{polarity: true, relation: "holding", args: [srcObj, dstObj]}]];
 			return interpretation;
 		}
 
 		return null;
-		// Goes through the list of objects and returns the one matching the arguments. 
-		//If there is no match it returns an empty string.  
+		// Goes through the list of objects and returns the one matching the arguments.
+		//If there is no match it returns an empty string.
 		function findObject(entity : Parser.Entity, state : WorldState) : string {
 			var objForm = entity.object.form;
 			var	objColor = entity.object.color;
