@@ -119,7 +119,7 @@ possible parse of the command. No need to change this one.
 
 		var loc = cmd.location;
 
-		if(cmd.command == "take"){
+		if(cmd.command === "take"){
 			srcObjs = findObject(cmd.entity, state);
 
 
@@ -130,7 +130,7 @@ possible parse of the command. No need to change this one.
             }
 
 		}
-		else if(cmd.command == "put"){
+		else if(cmd.command === "put"){
 			dstObjs = findObject(cmd.location.entity, state);
 
             if(!dstObjs.length) return null;
@@ -139,7 +139,7 @@ possible parse of the command. No need to change this one.
 				args: [state.holding, dstObjs[0]]}]];
 		}
 
-		else if (cmd.command == "move"){
+		else if (cmd.command === "move"){
 			srcObjs = findObject(cmd.entity, state);
 
             if(!srcObjs.length) return null;
@@ -150,7 +150,7 @@ possible parse of the command. No need to change this one.
 
       for(var i = 0 ; i < srcObjs.length ; i++) {
       	for(var j = 0 ; j < dstObjs.length ; j++) {
-          if(srcObjs[i] != dstObjs[j]){
+          if(srcObjs[i] !== dstObjs[j]){
 						interpretation.push([{polarity: true, relation: loc.relation,
 							args: [srcObjs[i], dstObjs[j]]}]);
 					}
@@ -170,10 +170,10 @@ possible parse of the command. No need to change this one.
 
 			var objects : string[] = Array.prototype.concat.apply([], state.stacks);
 
-			if(objForm == "floor")
+			if(objForm === "floor")
 				objects.push("floor");
 
-			if(state.holding != null)
+			if(state.holding !== null)
 				objects.push(state.holding);
 
 /*
@@ -191,9 +191,9 @@ possible parse of the command. No need to change this one.
 
       return objects.filter(function(y) {
         var x : ObjectDefinition = state.objects[y];
-        return ((objForm == x.form || objForm == 'anyform') &&
-        (objColor == x.color || objColor == null) &&
-        (objSize == x.size || objSize == null))
+        return ((objForm === x.form || objForm === 'anyform') &&
+        (objColor === x.color || objColor === null) &&
+        (objSize === x.size || objSize === null))
       });
 
 
