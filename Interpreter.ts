@@ -112,7 +112,6 @@ possible parse of the command. No need to change this one.
    code for an example, which means ontop(a,floor) AND holding(b).
    */
   function interpretCommand(cmd : Parser.Command, state : WorldState) : DNFFormula {
-
     var interpretation : DNFFormula = null;
     var srcObjs : string[] = [];
     var dstObjs : string[] = [];
@@ -122,16 +121,16 @@ possible parse of the command. No need to change this one.
     if(cmd.command === "take"){
       srcObjs = findObject(cmd.entity, state);
 
-        if(!srcObjs.length) return null;
+      if(!srcObjs.length) return null;
 
-        for(var i = 0 ; i < srcObjs.length ; i++)
+      for(var i = 0 ; i < srcObjs.length ; i++)
         interpretation.push([{polarity: true, relation: "holding", args: [srcObjs[i]]}]);
 
     }
     else if(cmd.command === "put"){
       dstObjs = findObject(cmd.location.entity, state);
 
-        if(!dstObjs.length) return null;
+      if(!dstObjs.length) return null;
 
       interpretation = [[{polarity: true, relation: loc.relation,
         args: [state.holding, dstObjs[0]]}]];
@@ -140,11 +139,11 @@ possible parse of the command. No need to change this one.
     else if (cmd.command === "move"){
       srcObjs = findObject(cmd.entity, state);
 
-        if(!srcObjs.length) return null;
+      if(!srcObjs.length) return null;
 
       dstObjs = findObject(cmd.location.entity, state);
 
-        if(!dstObjs.length) return null;
+      if(!dstObjs.length) return null;
 
         for(var i = 0 ; i < srcObjs.length ; i++)
           for(var j = 0 ; j < dstObjs.length ; j++)
@@ -169,12 +168,12 @@ possible parse of the command. No need to change this one.
       if(state.holding !== null)
         objects.push(state.holding);
 
-            return objects.filter(function(y) {
-              var x : ObjectDefinition = state.objects[y];
-              return ((objForm === x.form || objForm === 'anyform') &&
-              (objColor === x.color || objColor === null) &&
-              (objSize === x.size || objSize === null))
-            });
+      return objects.filter(function(y) {
+        var x : ObjectDefinition = state.objects[y];
+        return ((objForm === x.form || objForm === 'anyform') &&
+        (objColor === x.color || objColor === null) &&
+        (objSize === x.size || objSize === null))
+      });
 
 
     }
