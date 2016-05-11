@@ -122,10 +122,7 @@ possible parse of the command. No need to change this one.
 		if(cmd.command == "take"){
 			srcObj = findObject(cmd.entity, state);
 
-            if(srcObj == null){
-			    interpretation = null;
-				return interpretation;
-            }
+            if(srcObj) return null;
 
 			interpretation = [[{polarity: true, relation: "holding", args: [srcObj]}]];
 			return interpretation;
@@ -133,10 +130,7 @@ possible parse of the command. No need to change this one.
 		else if(cmd.command == "put"){
 			dstObj = findObject(cmd.location.entity, state);
 
-            if(dstObj == null){
-				interpretation = null;
-				return interpretation;
-            }
+            if(dstObj) return null;
 
 			interpretation = [[{polarity: true, relation: loc.relation,
 				args: [state.holding, dstObj]}]];
@@ -145,18 +139,13 @@ possible parse of the command. No need to change this one.
 
 		else if (cmd.command == "move"){
 			srcObj = findObject(cmd.entity, state);
-			
-            if(srcObj == null){
-				interpretation = null;
-				return interpretation;
-            }
+
+            if(srcObj)return null;
 
 			dstObj = findObject(cmd.location.entity, state);
 
-            if(dstObj == null){
-				interpretation = null;
-				return interpretation;
-            }
+            if(dstObj) return null;
+
 			interpretation = [[{polarity: true, relation: "holding", args: [srcObj, dstObj]}]];
 			return interpretation;
 		}
@@ -182,7 +171,7 @@ possible parse of the command. No need to change this one.
 
 			for (var i = 0; i < objects.length; i++) {
 				var object : ObjectDefinition = state.objects[objects[i]];
-				if ((objForm == object.form || objForm == null) &&
+				if ((objForm == object.form || objForm == 'anyform') &&
 					(objColor == object.color || objColor == null) &&
 					(objSize == object.size || objSize == null)){
 					obj = objects[i];
