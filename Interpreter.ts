@@ -120,7 +120,7 @@ possible parse of the command. No need to change this one.
 		var loc = cmd.location;
 
 		if(cmd.command == "take"){
-			srcObj = objectInObjects(cmd.entity, state);
+			srcObj = findObject(cmd.entity, state);
 
             if(srcObj == null){
 			    interpretation = null;
@@ -131,7 +131,7 @@ possible parse of the command. No need to change this one.
 			return interpretation;
 		}
 		else if(cmd.command == "put"){
-			dstObj = objectInObjects(cmd.location.entity, state);
+			dstObj = findObject(cmd.location.entity, state);
 
             if(dstObj == null){
 				interpretation = null;
@@ -144,14 +144,14 @@ possible parse of the command. No need to change this one.
 		}
 
 		else if (cmd.command == "move"){
-			srcObj = objectInObjects(cmd.entity, state);
+			srcObj = findObject(cmd.entity, state);
 			
             if(srcObj == null){
 				interpretation = null;
 				return interpretation;
             }
 
-			dstObj = objectInObjects(cmd.location.entity, state);
+			dstObj = findObject(cmd.location.entity, state);
 
             if(dstObj == null){
 				interpretation = null;
@@ -164,7 +164,7 @@ possible parse of the command. No need to change this one.
 		return null;
 
 
-		function objectInObjects(entity : Parser.Entity, state : WorldState) : string {
+		function findObject(entity : Parser.Entity, state : WorldState) : string {
 			var objForm = entity.object.form;
 			var	objColor = entity.object.color;
 			var	objSize = entity.object.size;
