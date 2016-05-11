@@ -26,8 +26,8 @@
 */
 module Interpreter {
 
-    //////////////////////////////////////////////////////////////////////
-    // exported functions, classes and interfaces/types
+	//////////////////////////////////////////////////////////////////////
+	// exported functions, classes and interfaces/types
 
 /**
 Top-level function for the Interpreter. It calls `interpretCommand` for each
@@ -37,100 +37,102 @@ possible parse of the command. No need to change this one.
 * @returns Augments ParseResult with a list of interpretations. Each
   interpretation is represented by a list of Literals.
 */
-    export function interpret(parses : Parser.ParseResult[],
-        currentState : WorldState) : InterpretationResult[] {
-        var errors : Error[] = [];
-        var interpretations : InterpretationResult[] = [];
-        parses.forEach((parseresult) => {
-            try {
-                var result : InterpretationResult = <InterpretationResult>parseresult;
-                result.interpretation = interpretCommand(result.parse, currentState);
-                interpretations.push(result);
-            } catch(err) {
-                errors.push(err);
-            }
-        });
-        if (interpretations.length) {
-            return interpretations;
-        } else {
-            // only throw the first error found
-            throw errors[0];
-        }
-    }
+	export function interpret(parses : Parser.ParseResult[],
+		currentState : WorldState) : InterpretationResult[] {
+		var errors : Error[] = [];
+		var interpretations : InterpretationResult[] = [];
+		parses.forEach((parseresult) => {
+			try {
+				var result : InterpretationResult = <InterpretationResult>parseresult;
+				result.interpretation = interpretCommand(result.parse, currentState);
+				interpretations.push(result);
+			} catch(err) {
+				errors.push(err);
+			}
+		});
+		if (interpretations.length) {
+			return interpretations;
+		} else {
+			// only throw the first error found
+			throw errors[0];
+		}
+	}
 
-    export interface InterpretationResult extends Parser.ParseResult {
-        interpretation : DNFFormula;
-    }
+	export interface InterpretationResult extends Parser.ParseResult {
+		interpretation : DNFFormula;
+	}
 
-    export type DNFFormula = Conjunction[];
-    type Conjunction = Literal[];
+	export type DNFFormula = Conjunction[];
+	type Conjunction = Literal[];
 
-    /**
-    * A Literal represents a relation that is intended to
-    * hold among some objects.
-    */
-    export interface Literal {
+	/**
+	* A Literal represents a relation that is intended to
+	* hold among some objects.
+	*/
+	export interface Literal {
 	/** Whether this literal asserts the relation should hold
 	 * (true polarity) or not (false polarity). For example, we
 	 * can specify that "a" should *not* be on top of "b" by the
 	 * literal {polarity: false, relation: "ontop", args:
 	 * ["a","b"]}.
 	 */
-        polarity : boolean;
+		polarity : boolean;
 	/** The name of the relation in question. */
-        relation : string;
+		relation : string;
 	/** The arguments to the relation. Usually these will be either objects
-     * or special strings such as "floor" or "floor-N" (where N is a column) */
-        args : string[];
-    }
+	 * or special strings such as "floor" or "floor-N" (where N is a column) */
+		args : string[];
+	}
 
-    export function stringify(result : InterpretationResult) : string {
-        return result.interpretation.map((literals) => {
-            return literals.map((lit) => stringifyLiteral(lit)).join(" & ");
-            // return literals.map(stringifyLiteral).join(" & ");
-        }).join(" | ");
-    }
+	export function stringify(result : InterpretationResult) : string {
+		return result.interpretation.map((literals) => {
+			return literals.map((lit) => stringifyLiteral(lit)).join(" & ");
+			// return literals.map(stringifyLiteral).join(" & ");
+		}).join(" | ");
+	}
 
-    export function stringifyLiteral(lit : Literal) : string {
-        return (lit.polarity ? "" : "-") + lit.relation + "(" + lit.args.join(",") + ")";
-    }
+	export function stringifyLiteral(lit : Literal) : string {
+		return (lit.polarity ? "" : "-") + lit.relation + "(" + lit.args.join(",") + ")";
+	}
 
-    //////////////////////////////////////////////////////////////////////
-    // private functions
-    /**
-     * The core interpretation function. The code here is just a
-     * template; you should rewrite this function entirely. In this
-     * template, the code produces a dummy interpretation which is not
-     * connected to `cmd`, but your version of the function should
-     * analyse cmd in order to figure out what interpretation to
-     * return.
-     * @param cmd The actual command. Note that it is *not* a string, but rather
-      an object of type `Command` (as it has been parsed by the parser).
-     * @param state The current state of the world. Useful to look up objects in the world.
-     * @returns A list of list of Literal, representing a formula in disjunctive
-     normal form (disjunction of conjunctions). See the dummy interpetation returned in the
-     code for an example, which means ontop(a,floor) AND holding(b).
-     */
-    function interpretCommand(cmd : Parser.Command, state : WorldState) : DNFFormula {
+	//////////////////////////////////////////////////////////////////////
+	// private functions
+	/**
+	 * The core interpretation function. The code here is just a
+	 * template; you should rewrite this function entirely. In this
+	 * template, the code produces a dummy interpretation which is not
+	 * connected to `cmd`, but your version of the function should
+	 * analyse cmd in order to figure out what interpretation to
+	 * return.
+	 * @param cmd The actual command. Note that it is *not* a string, but rather
+	  an object of type `Command` (as it has been parsed by the parser).
+	 * @param state The current state of the world. Useful to look up objects in the world.
+	 * @returns A list of list of Literal, representing a formula in disjunctive
+	 normal form (disjunction of conjunctions). See the dummy interpetation returned in the
+	 code for an example, which means ontop(a,floor) AND holding(b).
+	 */
+	function interpretCommand(cmd : Parser.Command, state : WorldState) : DNFFormula {
 
-    	var interpretation : DNFFormula = null;
-    	var srcObjs : string[] = [];
-    	var dstObjs : string[] = [];
+		var interpretation : DNFFormula = null;
+		var srcObjs : string[] = [];
+		var dstObjs : string[] = [];
 
 		var loc = cmd.location;
 
 		if(cmd.command == "take"){
 			srcObjs = findObject(cmd.entity, state);
 
-            if(!srcObjs) return null;
+			if(!srcObjs) return null;
 
-			interpretation = [[{polarity: true, relation: "holding", args: [srcObjs[0]]}]];
+            for(var i = 0 ; i < srcObjs.length ; i++){
+			    interpretation.push([{polarity: true, relation: "holding", args: [srcObjs[i]]}]);
+            }
 			return interpretation;
 		}
 		else if(cmd.command == "put"){
 			dstObjs = findObject(cmd.location.entity, state);
 
-            if(!dstObjs) return null;
+			if(!dstObjs) return null;
 
 			interpretation = [[{polarity: true, relation: loc.relation,
 				args: [state.holding, dstObjs[0]]}]];
@@ -140,18 +142,18 @@ possible parse of the command. No need to change this one.
 		else if (cmd.command == "move"){
 			srcObjs = findObject(cmd.entity, state);
 
-            if(!srcObjs) return null;
+			if(!srcObjs) return null;
 
 			dstObjs = findObject(cmd.location.entity, state);
 
-            if(!dstObjs) return null;
+			if(!dstObjs) return null;
 
-            for(var i = 0 ; i < srcObjs.length ; i++){
-            	for(var j = 0 ; j < dstObjs.length ; j++){
-            		if(srcObjs[i] != dstObjs[j]){
+			for(var i = 0 ; i < srcObjs.length ; i++){
+				for(var j = 0 ; j < dstObjs.length ; j++){
+					if(srcObjs[i] != dstObjs[j]){
 						interpretation.push([{polarity: true, relation: loc.relation,
 							args: [srcObjs[i], dstObjs[j]]}]);
-            		}
+					}
 				}
 			}
 			return interpretation;
@@ -185,25 +187,25 @@ possible parse of the command. No need to change this one.
 				}
 
 			}
-            return objs;
+			return objs;
 
 
 
 		}
 
 
-        // This returns a dummy interpretation involving two random objects in the world
-        /*
-        var objects : string[] = Array.prototype.concat.apply([], state.stacks);
-        var a : string = objects[Math.floor(Math.random() * objects.length)];
-        var b : string = objects[Math.floor(Math.random() * objects.length)];
-        var interpretation : DNFFormula = [[
-            {polarity: true, relation: "ontop", args: [a, "floor"]},
-            {polarity: true, relation: "holding", args: [b]}
+		// This returns a dummy interpretation involving two random objects in the world
+		/*
+		var objects : string[] = Array.prototype.concat.apply([], state.stacks);
+		var a : string = objects[Math.floor(Math.random() * objects.length)];
+		var b : string = objects[Math.floor(Math.random() * objects.length)];
+		var interpretation : DNFFormula = [[
+			{polarity: true, relation: "ontop", args: [a, "floor"]},
+			{polarity: true, relation: "holding", args: [b]}
 
-        ]];
-        return interpretation;
-        */
-    }
+		]];
+		return interpretation;
+		*/
+	}
 
 }
