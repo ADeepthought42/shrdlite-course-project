@@ -128,77 +128,80 @@ possible parse of the command. No need to change this one.
 		var locObjSize = loc.entity.object.size;
 
 		if(cmd.command == "take"){
-			for (var i = 0; i < objects.length; i++) {
-				var obj : ObjectDefinition = state.objects[objects[i]];
-				if ((objForm == obj.form || objForm == null) &&
-					(objColor == obj.color || objColor == null) &&
-					(objSize == obj.size || objSize == null)){
-					srcObj = objects[i];
-				}
+			srcObj = objectInObjects(cmd.entity, state);
 
-			}
             if(srcObj == null){
 			    interpretation = null;
 				return interpretation;
             }
+
 			interpretation = [[{polarity: true, relation: "holding", args: [srcObj]}]];
 			return interpretation;
 		}
 		else if(cmd.command == "put"){
-            if(locObjForm == "floor")
-                dstObj = "floor";
-			for (var i = 0; i < objects.length; i++) {
-				var obj : ObjectDefinition = state.objects[objects[i]];
-				if ((locObjForm == obj.form || locObjForm == null) &&
-					(locObjColor == obj.color || locObjColor == null) &&
-					(locObjSize == obj.size || locObjSize == null)){
-					dstObj = objects[i];
-				}
+			dstObj = objectInObjects(cmd.location.entity, state);
 
-			}
             if(dstObj == null){
 				interpretation = null;
 				return interpretation;
             }
+
 			interpretation = [[{polarity: true, relation: loc.relation,
-        args: [state.holding, dstObj]}]];
+				args: [state.holding, dstObj]}]];
 			return interpretation;
 		}
 
 		else if (cmd.command == "move"){
-			for (var i = 0; i < objects.length; i++) {
-				var obj : ObjectDefinition = state.objects[objects[i]];
-				if ((objForm == obj.form || objForm == null) &&
-					(objColor == obj.color || objColor == null) &&
-					(objSize == obj.size || objSize == null)){
-					srcObj = objects[i];
-				}
-			}
+			srcObj = objectInObjects(cmd.entity, state);
+			
             if(srcObj == null){
 				interpretation = null;
 				return interpretation;
             }
 
-			for (var i = 0; i < objects.length; i++) {
-				var obj : ObjectDefinition = state.objects[objects[i]];
-				if ((locObjForm == obj.form || locObjForm == null) &&
-					(locObjColor == obj.color || locObjColor == null) &&
-					(locObjSize == obj.size || locObjSize == null)){
-					dstObj = objects[i];
-				}
-			}
+			dstObj = objectInObjects(cmd.location.entity, state);
+
             if(dstObj == null){
 				interpretation = null;
 				return interpretation;
             }
-			interpretation = [[{polarity: true, relation: "holding", args: ["m"]}]];
+			interpretation = [[{polarity: true, relation: "holding", args: [srcObj, dstObj]}]];
 			return interpretation;
 		}
 
 		return null;
 
 
+		function objectInObjects(entity : Parser.Entity, state : WorldState) : string {
+			var objForm = entity.object.form;
+			var	objColor = entity.object.color;
+			var	objSize = entity.object.size;
 
+			var obj : string = "";
+
+			var objects : string[] = Array.prototype.concat.apply([], state.stacks);
+
+			if(objForm == "floor")
+				return "floor";
+
+			if(state.holding != null)
+				objects.push(state.holding);
+
+
+			for (var i = 0; i < objects.length; i++) {
+				var object : ObjectDefinition = state.objects[objects[i]];
+				if ((objForm == object.form || objForm == null) &&
+					(objColor == object.color || objColor == null) &&
+					(objSize == object.size || objSize == null)){
+					obj = objects[i];
+				}
+
+			}
+            return obj;
+
+
+
+		}
 
 
         // This returns a dummy interpretation involving two random objects in the world
