@@ -112,25 +112,33 @@ possible parse of the command. No need to change this one.
    code for an example, which means ontop(a,floor) AND holding(b).
    */
   function interpretCommand(cmd : Parser.Command, state : WorldState) : DNFFormula {
-    var interpretation : DNFFormula = null;
+    var interpretation : DNFFormula = [];
     var srcObjs : string[] = [];
     var dstObjs : string[] = [];
     var loc = cmd.location;
 
+    function findProp(obj : Parser.Object) : boolean {
+      return obj.location != null;
+    }
+
+    console.log(cmd.entity.object);
+    //console.log("Found:--------");
+    //console.log(findProp(cmd.entity.object));
     if(cmd.command === "take"){
       srcObjs = findObjects(cmd.entity, state);
 
-      if(!srcObjs.length) 
+      if(!srcObjs.length)
         return null;
 
       for(var i = 0 ; i < srcObjs.length ; i++)
         interpretation.push([{polarity: true, relation: "holding", args: [srcObjs[i]]}]);
 
+
     }
     else if(cmd.command === "put"){
       dstObjs = findObjects(cmd.location.entity, state);
 
-      if(!dstObjs.length) 
+      if(!dstObjs.length)
         return null;
 
       interpretation = [[{polarity: true, relation: loc.relation,
@@ -140,12 +148,12 @@ possible parse of the command. No need to change this one.
     else if (cmd.command === "move"){
       srcObjs = findObjects(cmd.entity, state);
 
-      if(!srcObjs.length) 
+      if(!srcObjs.length)
         return null;
 
       dstObjs = findObjects(cmd.location.entity, state);
 
-      if(!dstObjs.length) 
+      if(!dstObjs.length)
         return null;
 
       for(var i = 0 ; i < srcObjs.length ; i++)
@@ -160,8 +168,8 @@ possible parse of the command. No need to change this one.
     //If there is no match it returns an empty string.
     function findObjects(entity : Parser.Entity, state : WorldState) : string[] {
       var objForm = entity.object.form;
-      var	objColor = entity.object.color;
-      var	objSize = entity.object.size;
+      var objColor = entity.object.color;
+      var objSize = entity.object.size;
       var objects : string[] = Array.prototype.concat.apply([], state.stacks);
 
       if(objForm === "floor")
