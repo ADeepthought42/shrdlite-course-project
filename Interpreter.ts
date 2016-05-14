@@ -138,33 +138,56 @@ possible parse of the command. No need to change this one.
         interpretation = [[{polarity: true, relation: loc.relation,
         args: [state.holding, dstObjs[0]]}]];
     } else if (cmd.command === "move") {
-    //    console.log("Src:");
         srcObjs = findObjects(cmd.entity, state);
-    //    console.log("src find returned: "+srcObjs.toString());
         if(!srcObjs.length)
           throw "";
 
-    //    console.log("Dst:");
         dstObjs = findObjects(cmd.location.entity, state);
-    //    console.log("dst find returned: "+dstObjs.toString());
 
         if(!dstObjs.length)
           throw "";
-/*
-        if (dstObjs.length === 1 && srcObjs.length === 1)
-            return [[{polarity: true, relation: loc.relation,
-             args: [srcObjs[0], dstObjs[0]]}]];
-*/
+
+          let isSrcComplex = cmd.entity.object.location != null;
+          let isDstComplex = cmd.location.entity.object.location != null;
+
+          if(loc.relation === "inside" && !isSrcComplex && !isDstComplex) {
+            console.log("något kanske skall filteras bort");
+            console.log(state.stacks);
+            srcObjs = srcObjs.filter( function (y) {
+                for (let x of dstObjs)
+                  for (let stack of state.stacks){
+                      let ystack = stack.indexOf(y);
+                      let xstack = stack.indexOf(x);
+                      if (xstack > -1 && ystack > xstack)
+                          return true;
+                  }
+              return false;
+              })
+        } else if (loc.relation === "ontop" && !isSrcComplex && !isDstComplex) {
+            console.log("något kanske skall filteras bort");
+            console.log(state.stacks);
+            srcObjs = srcObjs.filter( function (y) {
+                for (let x of dstObjs)
+                  for (let stack of state.stacks){
+                      let ystack = stack.indexOf(y);
+                      let xstack = stack.indexOf(x);
+                      if (xstack > -1 && xstack+1 === ystack
+                      || x === 'floor' && ystack === 0)
+                          return true;
+                  }
+              return false;
+          });
+        }
+        if(!srcObjs.length)
+          throw "";
+
         for(let src of srcObjs)
             for(let dst of dstObjs)
-                if(src !== dst) {
+                if(src !== dst)
                   interpretation.push([{polarity: true, relation: loc.relation,
                    args: [src, dst]}]);
-            //       console.log([src, dst]);
-                }
 
     }
-    //console.log(interpretation);
     return interpretation;
   }
 
@@ -235,7 +258,7 @@ possible parse of the command. No need to change this one.
                         return true;
                 }
             return false;
-            })
+        });
       }
 //    console.log(loc_objects);
     return objects;
