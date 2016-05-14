@@ -117,45 +117,54 @@ possible parse of the command. No need to change this one.
     let dstObjs : string[] = [];
     let loc = cmd.location;
 
-    console.log("\n New:");
-/*
-    console.log(state.stacks);
-    console.log("\nCommand:");*/
-    console.log(cmd.command);
-    //console.log(loc.relation);
+//    console.log("\n New:");
+//    console.log("Command: " + cmd.command);
+//    console.log("Location relation : " + loc.relation);
     if (cmd.command === "take") {
         srcObjs = findObjects(cmd.entity, state);
 
         if(!srcObjs.length)
-          return null;
+          throw "";
 
-        for(var i = 0 ; i < srcObjs.length ; i++)
-          interpretation.push([{polarity: true, relation: "holding", args: [srcObjs[i]]}]);
+        for(let src of srcObjs)
+          interpretation.push([{polarity: true,
+              relation: "holding", args: [src]}]);
     } else if (cmd.command === "put") {
         dstObjs = findObjects(cmd.location.entity, state);
 
         if(!dstObjs.length)
-          return null;
+          throw "";
 
         interpretation = [[{polarity: true, relation: loc.relation,
         args: [state.holding, dstObjs[0]]}]];
     } else if (cmd.command === "move") {
+    //    console.log("Src:");
         srcObjs = findObjects(cmd.entity, state);
-
+    //    console.log("src find returned: "+srcObjs.toString());
         if(!srcObjs.length)
-          return null;
+          throw "";
 
+    //    console.log("Dst:");
         dstObjs = findObjects(cmd.location.entity, state);
+    //    console.log("dst find returned: "+dstObjs.toString());
 
         if(!dstObjs.length)
-          return null;
-
+          throw "";
+/*
+        if (dstObjs.length === 1 && srcObjs.length === 1)
+            return [[{polarity: true, relation: loc.relation,
+             args: [srcObjs[0], dstObjs[0]]}]];
+*/
         for(let src of srcObjs)
             for(let dst of dstObjs)
-                if(src !== dst)
+                if(src !== dst) {
                   interpretation.push([{polarity: true, relation: loc.relation,
                    args: [src, dst]}]);
+            //       console.log([src, dst]);
+                }
+
     }
+    //console.log(interpretation);
     return interpretation;
   }
 
@@ -193,14 +202,11 @@ possible parse of the command. No need to change this one.
       let loc_relation  = loc.relation;
       let loc_objects   = findObjects(loc_entity,state);
       let loc_quantifier = loc_entity.quantifier;
-      console.log(loc);
-      console.log(objects);
-      console.log(loc_relation + " " + loc_quantifier);
+
       // Quantifier handler
       if(loc_quantifier === "any") {
           // any of these loc_objects, though only one?
-      } else if(loc_quantifier === "the") {
-          if (loc_objects.length !== 1)
+      } else if(loc_quantifier === "the" && loc_objects.length !== 1) {
             throw "The Quantifier \"the\" can only refer to a specific object"
       }
 
@@ -212,7 +218,7 @@ possible parse of the command. No need to change this one.
                 for (let stack of state.stacks){
                     let ystack = stack.indexOf(y);
                     let xstack = stack.indexOf(x);
-                    if (xstack > -1 && ystack > xstack && ystack > -1)
+                    if (xstack > -1 && ystack > xstack)
                         return true;
                 }
             return false;
@@ -231,7 +237,7 @@ possible parse of the command. No need to change this one.
             return false;
             })
       }
-    console.log(loc_objects);
+//    console.log(loc_objects);
     return objects;
   }
 }
