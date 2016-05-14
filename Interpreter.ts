@@ -1,5 +1,6 @@
 ///<reference path="World.ts"/>
 ///<reference path="Parser.ts"/>
+///<reference path="lib/collections.ts"/>
 
 /**
 * Interpreter module
@@ -111,81 +112,83 @@ possible parse of the command. No need to change this one.
    normal form (disjunction of conjunctions). See the dummy interpetation returned in the
    code for an example, which means ontop(a,floor) AND holding(b).
    */
+
   function interpretCommand(cmd : Parser.Command, state : WorldState) : DNFFormula {
     let interpretation : DNFFormula = [];
     let srcObjs : string[] = [];
     let dstObjs : string[] = [];
     let loc = cmd.location;
 
-//    console.log("\n New:");
-//    console.log("Command: " + cmd.command);
-//    console.log("Location relation : " + loc.relation);
+    // Command handler
     if (cmd.command === "take") {
         srcObjs = findObjects(cmd.entity, state);
-
-        if(!srcObjs.length)
-          throw "";
-
         for(let src of srcObjs)
           interpretation.push([{polarity: true,
               relation: "holding", args: [src]}]);
+
     } else if (cmd.command === "put") {
         dstObjs = findObjects(cmd.location.entity, state);
-
-        if(!dstObjs.length)
-          throw "";
-
         interpretation = [[{polarity: true, relation: loc.relation,
         args: [state.holding, dstObjs[0]]}]];
+
     } else if (cmd.command === "move") {
         srcObjs = findObjects(cmd.entity, state);
-        if(!srcObjs.length)
-          throw "";
-
         dstObjs = findObjects(cmd.location.entity, state);
 
-        if(!dstObjs.length)
-          throw "";
-
-          let isSrcComplex = cmd.entity.object.location != null;
-          let isDstComplex = cmd.location.entity.object.location != null;
-
-          if(loc.relation === "inside" && !isSrcComplex && !isDstComplex) {
-            console.log("något kanske skall filteras bort");
-            console.log(state.stacks);
-            srcObjs = srcObjs.filter( function (y) {
-                for (let x of dstObjs)
-                  for (let stack of state.stacks){
-                      let ystack = stack.indexOf(y);
-                      let xstack = stack.indexOf(x);
-                      if (xstack > -1 && ystack > xstack)
-                          return true;
-                  }
-              return false;
-              })
-        } else if (loc.relation === "ontop" && !isSrcComplex && !isDstComplex) {
-            console.log("något kanske skall filteras bort");
-            console.log(state.stacks);
-            srcObjs = srcObjs.filter( function (y) {
-                for (let x of dstObjs)
-                  for (let stack of state.stacks){
-                      let ystack = stack.indexOf(y);
-                      let xstack = stack.indexOf(x);
-                      if (xstack > -1 && xstack+1 === ystack
-                      || x === 'floor' && ystack === 0)
-                          return true;
-                  }
-              return false;
-          });
-        }
-        if(!srcObjs.length)
-          throw "";
+        let test : collections.Dictionary<string,string[]> =
+            new collections.Dictionary<string,string[]>();
 
         for(let src of srcObjs)
-            for(let dst of dstObjs)
+          test.setValue(src,dstObjs);
+
+        let isSrcComplex = cmd.entity.object.location != null;
+        let isDstComplex = cmd.location.entity.object.location != null;
+        if (!isSrcComplex && !isDstComplex)
+        if(loc.relation === "inside")
+
+            test.forEach(function(src){
+                let dstObs = test.getValue(src);
+                let filter : boolean = true;
+                for(let dst of dstObs)
+                    for (let stack of state.stacks){
+                        let ystack = stack.indexOf(src);
+                        let xstack = stack.indexOf(dst);
+                        let dst_obj = state.objects[dst];
+                        let src_obj = state.objects[src];
+                        // src is not in stack but dst is
+                        if (xstack > -1 && ystack < 0) {
+                            filter = false;
+                        if (src_obj.size === "large" && dst_obj.size === "small")
+                            test.setValue(src,dstObs = dstObs.filter(x => x !== dst));
+                        }
+                    }
+                if (!dstObs.length) throw "";
+                if (filter) test.remove(src);
+            });
+        else if (loc.relation === "ontop") {
+            test.forEach(function(src){
+                let dstObs = test.getValue(src);
+                let filter : boolean = true;
+                for(let dst of dstObs)
+                    for (let stack of state.stacks){
+                        let ystack = stack.indexOf(src);
+                        let xstack = stack.indexOf(dst);
+                        if (xstack > -1 && xstack+1 === ystack
+                        || dst === 'floor' && ystack === 0)
+                          filter = false;
+                    }
+                if (filter) test.remove(src);
+            });
+        }
+
+        if(test.isEmpty()) throw "";
+
+        test.forEach(function(src) {
+            for(let dst of test.getValue(src))
                 if(src !== dst)
-                  interpretation.push([{polarity: true, relation: loc.relation,
-                   args: [src, dst]}]);
+                    interpretation.push([{polarity: true, relation: loc.relation,
+                     args: [src, dst]}]);
+        });
 
     }
     return interpretation;
@@ -228,7 +231,7 @@ possible parse of the command. No need to change this one.
 
       // Quantifier handler
       if(loc_quantifier === "any") {
-          // any of these loc_objects, though only one?
+          // any of these loc_objects?
       } else if(loc_quantifier === "the" && loc_objects.length !== 1) {
             throw "The Quantifier \"the\" can only refer to a specific object"
       }
@@ -260,7 +263,8 @@ possible parse of the command. No need to change this one.
             return false;
         });
       }
-//    console.log(loc_objects);
+      if (!objects.length)
+        throw "";
     return objects;
   }
 }
