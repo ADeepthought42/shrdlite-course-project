@@ -112,79 +112,171 @@ possible parse of the command. No need to change this one.
    code for an example, which means ontop(a,floor) AND holding(b).
    */
   function interpretCommand(cmd : Parser.Command, state : WorldState) : DNFFormula {
-    var interpretation : DNFFormula = [];
-    var srcObjs : string[] = [];
-    var dstObjs : string[] = [];
-    var loc = cmd.location;
+    let interpretation : DNFFormula = [];
+    let srcObjs : string[] = [];
+    let dstObjs : string[] = [];
+    let loc = cmd.location;
 
-    function findProp(obj : Parser.Object) : boolean {
-      return obj.location != null;
+    function findProp(obj : Parser.Object) : Parser.Object {
+      return obj.location != null ? obj.object : obj;
     }
 
-    console.log(cmd.entity.object);
-    //console.log("Found:--------");
-    //console.log(findProp(cmd.entity.object));
-    if(cmd.command === "take"){
-      srcObjs = findObjects(cmd.entity, state);
+    /*console.log("\n New\nStacks:");
+    console.log(state.stacks);
+    console.log("\nCommand:");
+    console.log(cmd.command);*/
+    switch(cmd.command) {
+        case "take":
+            srcObjs = findObjects(cmd.entity, state);
 
-      if(!srcObjs.length)
-        return null;
+            if(!srcObjs.length)
+              return null;
 
-      for(var i = 0 ; i < srcObjs.length ; i++)
-        interpretation.push([{polarity: true, relation: "holding", args: [srcObjs[i]]}]);
+            for(var i = 0 ; i < srcObjs.length ; i++)
+              interpretation.push([{polarity: true, relation: "holding", args: [srcObjs[i]]}]);
+            break;
+        case "put":
+            dstObjs = findObjects(cmd.location.entity, state);
+
+            if(!dstObjs.length)
+              return null;
+
+            interpretation = [[{polarity: true, relation: loc.relation,
+            args: [state.holding, dstObjs[0]]}]];
+            break;
+        case "move":
+            srcObjs = findObjects(cmd.entity, state);
+
+            if(!srcObjs.length)
+              return null;
+
+            dstObjs = findObjects(cmd.location.entity, state);
+
+            if(!dstObjs.length)
+              return null;
 
 
-    }
-    else if(cmd.command === "put"){
-      dstObjs = findObjects(cmd.location.entity, state);
-
-      if(!dstObjs.length)
-        return null;
-
-      interpretation = [[{polarity: true, relation: loc.relation,
-       args: [state.holding, dstObjs[0]]}]];
-    }
-
-    else if (cmd.command === "move"){
-      srcObjs = findObjects(cmd.entity, state);
-
-      if(!srcObjs.length)
-        return null;
-
-      dstObjs = findObjects(cmd.location.entity, state);
-
-      if(!dstObjs.length)
-        return null;
-
-      for(var i = 0 ; i < srcObjs.length ; i++)
-        for(var j = 0 ; j < dstObjs.length ; j++)
-          if(srcObjs[i] !== dstObjs[j])
-            interpretation.push([{polarity: true, relation: loc.relation,
-             args: [srcObjs[i], dstObjs[j]]}]);
+          for(let src of srcObjs)
+            for(let dst of dstObjs)
+                if(src !== dst)
+                  interpretation.push([{polarity: true, relation: loc.relation,
+                   args: [src, dst]}]);
+            break;
     }
     return interpretation;
+  }
+  // Goes through the list of objects and returns the ones matching the arguments.
+  //If there is no match it returns an empty string.
+  function findObjects(entity : Parser.Entity, state : WorldState) : string[] {
+      let obj : Parser.Object = entity.object;
+      let isComplex = obj.location != null;
+      let asd = isComplex ? obj.object : obj;
+      let objForm = asd.form;
+      let objColor = asd.color;
+      let objSize = asd.size;
 
-    // Goes through the list of objects and returns the ones matching the arguments.
-    //If there is no match it returns an empty string.
-    function findObjects(entity : Parser.Entity, state : WorldState) : string[] {
-      var objForm = entity.object.form;
-      var objColor = entity.object.color;
-      var objSize = entity.object.size;
-      var objects : string[] = Array.prototype.concat.apply([], state.stacks);
-
-      if(objForm === "floor")
-        objects.push("floor");
+      let objects : string[] = Array.prototype.concat.apply([], state.stacks);
 
       if(state.holding)
-        objects.push(state.holding);
+          objects.push(state.holding);
 
       // Filter out all the objects that do not match the given descriptons
-      return objects.filter(function(y) {
-        var x : ObjectDefinition = state.objects[y];
-        return ((objForm === x.form || objForm === 'anyform') &&
-         (objColor === x.color || objColor === null) &&
-         (objSize === x.size || objSize === null))
+      objects = objects.filter(function(y) {
+          let x : ObjectDefinition = state.objects[y];
+          return ((objForm === x.form || objForm === 'anyform' ) &&
+          (objColor === x.color || objColor === null) &&
+          (objSize === x.size || objSize === null))
       });
-    }
+
+      if(objForm === "floor")
+          objects.push("floor");
+
+      if(isComplex) {
+          console.log("Before");
+          console.log(objects);
+          let loc           = obj.location;
+          let loc_entity    = loc.entity;
+          let loc_relation  = loc.relation;
+          let loc_objects   = findObjects(loc_entity,state);
+          let loc_quantifier = loc_entity.quantifier;
+          let stacks = state.stacks;
+          console.log("after");
+          console.log(objects);
+
+          loc_objects.sort();
+
+          console.log(loc_objects);
+          console.log(loc_relation);
+          console.log(loc_quantifier);
+          console.log("any"+objects.toString());
+          console.log(loc_objects[0]);
+
+
+          let stacksOfProps = stacks.filter(function(x){
+              for(let y of loc_objects) {
+                  if (x.indexOf(y) > -1)
+                      return true;
+              }
+                return false;
+          });
+
+          switch (loc_relation) {
+              case "inside":
+                  //filter out those objects that ain't in the
+                  break;
+              case "ontop":
+                  //should only be one, return that one
+                  break;
+          }
+          switch (loc_quantifier) {
+              case "any":
+                  console.log("any"+objects.toString());
+                  break;
+              case "the":
+                  //should only be one, return that one
+                  break;
+              }
+      }
+    return objects;
   }
 }
+
+
+/*
+    function isOk(ids : string) : string[] {
+        let strs : string[] = [];
+        if(hasLoc) {
+          var loc = obj.location;
+          var stacks = state.stacks;
+          console.log(stacks);
+          var rel = loc.relation;
+          var props = findObjects(loc.entity,state);
+
+
+          var stacksOfProps = stacks.filter(function(x){
+              for(let y of props) {
+                  if (x.indexOf(y) > -1)
+                      return true;
+              }
+                return false;
+          });
+
+          console.log(rel);
+          if (rel === "inside"){
+              for(let y of stacksOfProps)
+                  strs.push(y.pop());
+          } else if (rel === "ontop") {
+              for(let y of stacksOfProps) {
+                  let k = y.pop();
+                  console.log(k);
+                  if (k === ids)
+                      return true;
+              }
+                return false;
+          } else if (rel === "besides"){
+
+          }
+        }
+        return true;
+    }
+*/
