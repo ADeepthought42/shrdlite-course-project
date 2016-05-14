@@ -117,54 +117,50 @@ possible parse of the command. No need to change this one.
     let dstObjs : string[] = [];
     let loc = cmd.location;
 
-    function findProp(obj : Parser.Object) : Parser.Object {
-      return obj.location != null ? obj.object : obj;
-    }
-
-    /*console.log("\n New\nStacks:");
+    console.log("\n New:");
+/*
     console.log(state.stacks);
-    console.log("\nCommand:");
-    console.log(cmd.command);*/
-    switch(cmd.command) {
-        case "take":
-            srcObjs = findObjects(cmd.entity, state);
+    console.log("\nCommand:");*/
+    console.log(cmd.command);
+//    console.log(loc.relation);
+    if (cmd.command === "take") {
+        srcObjs = findObjects(cmd.entity, state);
 
-            if(!srcObjs.length)
-              return null;
+        if(!srcObjs.length)
+          return null;
 
-            for(var i = 0 ; i < srcObjs.length ; i++)
-              interpretation.push([{polarity: true, relation: "holding", args: [srcObjs[i]]}]);
-            break;
-        case "put":
-            dstObjs = findObjects(cmd.location.entity, state);
+        for(var i = 0 ; i < srcObjs.length ; i++)
+          interpretation.push([{polarity: true, relation: "holding", args: [srcObjs[i]]}]);
+    } else if (cmd.command === "put") {
+        dstObjs = findObjects(cmd.location.entity, state);
 
-            if(!dstObjs.length)
-              return null;
+        if(!dstObjs.length)
+          return null;
 
-            interpretation = [[{polarity: true, relation: loc.relation,
-            args: [state.holding, dstObjs[0]]}]];
-            break;
-        case "move":
-            srcObjs = findObjects(cmd.entity, state);
+        interpretation = [[{polarity: true, relation: loc.relation,
+        args: [state.holding, dstObjs[0]]}]];
+    } else if (cmd.command === "move") {
+        srcObjs = findObjects(cmd.entity, state);
 
-            if(!srcObjs.length)
-              return null;
+        if(!srcObjs.length)
+          return null;
 
-            dstObjs = findObjects(cmd.location.entity, state);
+        dstObjs = findObjects(cmd.location.entity, state);
 
-            if(!dstObjs.length)
-              return null;
+        if(!dstObjs.length)
+          return null;
 
+          console.log(dstObjs.toString());
 
-          for(let src of srcObjs)
+        for(let src of srcObjs)
             for(let dst of dstObjs)
                 if(src !== dst)
                   interpretation.push([{polarity: true, relation: loc.relation,
                    args: [src, dst]}]);
-            break;
     }
     return interpretation;
   }
+
   // Goes through the list of objects and returns the ones matching the arguments.
   //If there is no match it returns an empty string.
   function findObjects(entity : Parser.Entity, state : WorldState) : string[] {
@@ -174,6 +170,9 @@ possible parse of the command. No need to change this one.
       let objForm = asd.form;
       let objColor = asd.color;
       let objSize = asd.size;
+
+//      console.log("obj");
+//      console.log(obj);
 
       let objects : string[] = Array.prototype.concat.apply([], state.stacks);
 
@@ -188,55 +187,65 @@ possible parse of the command. No need to change this one.
           (objSize === x.size || objSize === null))
       });
 
-      if(objForm === "floor")
-          objects.push("floor");
+      if(objForm === 'floor')
+          objects.push('floor');
 
-      if(isComplex) {
-          console.log("Before");
-          console.log(objects);
-          let loc           = obj.location;
-          let loc_entity    = loc.entity;
-          let loc_relation  = loc.relation;
-          let loc_objects   = findObjects(loc_entity,state);
-          let loc_quantifier = loc_entity.quantifier;
-          let stacks = state.stacks;
-          console.log("after");
-          console.log(objects);
+      if(!isComplex)
+        return objects;
 
-          loc_objects.sort();
+//    let unique = Math.random();
+//    console.log("Before "+unique);
+//    console.log(objects);
 
-          console.log(loc_objects);
-          console.log(loc_relation);
-          console.log(loc_quantifier);
-          console.log("any"+objects.toString());
-          console.log(loc_objects[0]);
+      let loc           = obj.location;
+      let loc_entity    = loc.entity;
+      let loc_relation  = loc.relation;
+      let loc_objects   = findObjects(loc_entity,state);
+      let loc_quantifier = loc_entity.quantifier;
+      let stacks = state.stacks;
 
+      loc_objects.sort();
 
-          let stacksOfProps = stacks.filter(function(x){
-              for(let y of loc_objects) {
-                  if (x.indexOf(y) > -1)
-                      return true;
-              }
-                return false;
-          });
-
-          switch (loc_relation) {
-              case "inside":
-                  //filter out those objects that ain't in the
-                  break;
-              case "ontop":
-                  //should only be one, return that one
-                  break;
+      let stacksOfProps = stacks.filter(function(x){
+          for(let y of loc_objects) {
+              if (x.indexOf(y) > -1)
+                  return true;
           }
-          switch (loc_quantifier) {
-              case "any":
-                  console.log("any"+objects.toString());
-                  break;
-              case "the":
-                  //should only be one, return that one
-                  break;
-              }
+            return false;
+      });
+
+      // Quantifier handler
+      if(loc_quantifier === "any") {
+          console.log("any ");
+          // any of these loc_objects
+      } else if(loc_quantifier === "the") {
+          console.log("the ");
+          if (loc_objects.length !== 1)
+            throw "The Quantifier \"the\" can only refer to a specific object"
       }
+
+      // Relation handler
+      if(loc_relation === "inside") {
+          //filter out those objects that ain't in the
+          console.log("inside ");
+      } else if (loc_relation === "ontop") {
+          //should only be one, return that one
+          console.log("ontop ");
+          objects = objects.filter( function (y) {
+              for (let x of loc_objects)
+                for (let stack of state.stacks){
+                    let ystack = stack.indexOf(y);
+                    if (x === 'floor' && ystack === 0)
+                        return true;
+                    let xstack = stack.indexOf(x);
+                    if (xstack > -1 && xstack+1 === ystack)
+                        return true;
+                }
+            return false;
+            })
+      }
+
+    console.log(loc_objects);
     return objects;
   }
 }
