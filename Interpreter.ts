@@ -122,7 +122,7 @@ possible parse of the command. No need to change this one.
     console.log(state.stacks);
     console.log("\nCommand:");*/
     console.log(cmd.command);
-//    console.log(loc.relation);
+    //console.log(loc.relation);
     if (cmd.command === "take") {
         srcObjs = findObjects(cmd.entity, state);
 
@@ -150,8 +150,6 @@ possible parse of the command. No need to change this one.
         if(!dstObjs.length)
           return null;
 
-          console.log(dstObjs.toString());
-
         for(let src of srcObjs)
             for(let dst of dstObjs)
                 if(src !== dst)
@@ -170,9 +168,6 @@ possible parse of the command. No need to change this one.
       let objForm = asd.form;
       let objColor = asd.color;
       let objSize = asd.size;
-
-//      console.log("obj");
-//      console.log(obj);
 
       let objects : string[] = Array.prototype.concat.apply([], state.stacks);
 
@@ -193,99 +188,50 @@ possible parse of the command. No need to change this one.
       if(!isComplex)
         return objects;
 
-//    let unique = Math.random();
-//    console.log("Before "+unique);
-//    console.log(objects);
-
       let loc           = obj.location;
       let loc_entity    = loc.entity;
       let loc_relation  = loc.relation;
       let loc_objects   = findObjects(loc_entity,state);
       let loc_quantifier = loc_entity.quantifier;
-      let stacks = state.stacks;
-
-      loc_objects.sort();
-
-      let stacksOfProps = stacks.filter(function(x){
-          for(let y of loc_objects) {
-              if (x.indexOf(y) > -1)
-                  return true;
-          }
-            return false;
-      });
-
+      console.log(loc);
+      console.log(objects);
+      console.log(loc_relation + " " + loc_quantifier);
       // Quantifier handler
       if(loc_quantifier === "any") {
-          console.log("any ");
-          // any of these loc_objects
+          // any of these loc_objects, though only one?
       } else if(loc_quantifier === "the") {
-          console.log("the ");
           if (loc_objects.length !== 1)
             throw "The Quantifier \"the\" can only refer to a specific object"
       }
 
       // Relation handler
       if(loc_relation === "inside") {
-          //filter out those objects that ain't in the
-          console.log("inside ");
-      } else if (loc_relation === "ontop") {
-          //should only be one, return that one
-          console.log("ontop ");
+          //filter out those objects that ain't in the stack of a object
           objects = objects.filter( function (y) {
               for (let x of loc_objects)
                 for (let stack of state.stacks){
                     let ystack = stack.indexOf(y);
-                    if (x === 'floor' && ystack === 0)
-                        return true;
                     let xstack = stack.indexOf(x);
-                    if (xstack > -1 && xstack+1 === ystack)
+                    if (xstack > -1 && ystack > xstack && ystack > -1)
+                        return true;
+                }
+            return false;
+            })
+      } else if (loc_relation === "ontop") {
+          // filter out those that ain't ontop of the specified object
+          objects = objects.filter( function (y) {
+              for (let x of loc_objects)
+                for (let stack of state.stacks){
+                    let ystack = stack.indexOf(y);
+                    let xstack = stack.indexOf(x);
+                    if (xstack > -1 && xstack+1 === ystack
+                    || x === 'floor' && ystack === 0)
                         return true;
                 }
             return false;
             })
       }
-
     console.log(loc_objects);
     return objects;
   }
 }
-
-
-/*
-    function isOk(ids : string) : string[] {
-        let strs : string[] = [];
-        if(hasLoc) {
-          var loc = obj.location;
-          var stacks = state.stacks;
-          console.log(stacks);
-          var rel = loc.relation;
-          var props = findObjects(loc.entity,state);
-
-
-          var stacksOfProps = stacks.filter(function(x){
-              for(let y of props) {
-                  if (x.indexOf(y) > -1)
-                      return true;
-              }
-                return false;
-          });
-
-          console.log(rel);
-          if (rel === "inside"){
-              for(let y of stacksOfProps)
-                  strs.push(y.pop());
-          } else if (rel === "ontop") {
-              for(let y of stacksOfProps) {
-                  let k = y.pop();
-                  console.log(k);
-                  if (k === ids)
-                      return true;
-              }
-                return false;
-          } else if (rel === "besides"){
-
-          }
-        }
-        return true;
-    }
-*/
