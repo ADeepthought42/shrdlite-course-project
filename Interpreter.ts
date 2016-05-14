@@ -38,39 +38,39 @@ possible parse of the command. No need to change this one.
 * @returns Augments ParseResult with a list of interpretations. Each
   interpretation is represented by a list of Literals.
 */
-  export function interpret(parses : Parser.ParseResult[],
-    currentState : WorldState) : InterpretationResult[] {
-    var errors : Error[] = [];
-    var interpretations : InterpretationResult[] = [];
-    parses.forEach((parseresult) => {
-      try {
-        var result : InterpretationResult = <InterpretationResult>parseresult;
-        result.interpretation = interpretCommand(result.parse, currentState);
-        interpretations.push(result);
-      } catch(err) {
-        errors.push(err);
-      }
-    });
-    if (interpretations.length) {
-      return interpretations;
-    } else {
-      // only throw the first error found
-      throw errors[0];
+    export function interpret(parses : Parser.ParseResult[],
+        currentState : WorldState) : InterpretationResult[] {
+            var errors : Error[] = [];
+            var interpretations : InterpretationResult[] = [];
+            parses.forEach((parseresult) => {
+                try {
+                    var result : InterpretationResult = <InterpretationResult>parseresult;
+                    result.interpretation = interpretCommand(result.parse, currentState);
+                    interpretations.push(result);
+                } catch(err) {
+                    errors.push(err);
+                }
+            });
+            if (interpretations.length) {
+                return interpretations;
+            } else {
+              // only throw the first error found
+                throw errors[0];
+            }
     }
-  }
 
-  export interface InterpretationResult extends Parser.ParseResult {
-    interpretation : DNFFormula;
-  }
+    export interface InterpretationResult extends Parser.ParseResult {
+        interpretation : DNFFormula;
+    }
 
-  export type DNFFormula = Conjunction[];
-  type Conjunction = Literal[];
+    export type DNFFormula = Conjunction[];
+    type Conjunction = Literal[];
 
   /**
   * A Literal represents a relation that is intended to
   * hold among some objects.
   */
-  export interface Literal {
+    export interface Literal {
   /** Whether this literal asserts the relation should hold
    * (true polarity) or not (false polarity). For example, we
    * can specify that "a" should *not* be on top of "b" by the
@@ -85,16 +85,16 @@ possible parse of the command. No need to change this one.
     args : string[];
   }
 
-  export function stringify(result : InterpretationResult) : string {
-    return result.interpretation.map((literals) => {
-      return literals.map((lit) => stringifyLiteral(lit)).join(" & ");
-      // return literals.map(stringifyLiteral).join(" & ");
-    }).join(" | ");
-  }
+    export function stringify(result : InterpretationResult) : string {
+        return result.interpretation.map((literals) => {
+            return literals.map((lit) => stringifyLiteral(lit)).join(" & ");
+            // return literals.map(stringifyLiteral).join(" & ");
+        }).join(" | ");
+    }
 
-  export function stringifyLiteral(lit : Literal) : string {
-    return (lit.polarity ? "" : "-") + lit.relation + "(" + lit.args.join(",") + ")";
-  }
+    export function stringifyLiteral(lit : Literal) : string {
+        return (lit.polarity ? "" : "-") + lit.relation + "(" + lit.args.join(",") + ")";
+    }
 
   //////////////////////////////////////////////////////////////////////
   // private functions
@@ -113,158 +113,165 @@ possible parse of the command. No need to change this one.
    code for an example, which means ontop(a,floor) AND holding(b).
    */
 
-  function interpretCommand(cmd : Parser.Command, state : WorldState) : DNFFormula {
-    let interpretation : DNFFormula = [];
-    let srcObjs : string[] = [];
-    let dstObjs : string[] = [];
-    let loc = cmd.location;
+    function interpretCommand(cmd : Parser.Command, state : WorldState) : DNFFormula {
+        let interpretation : DNFFormula = [];
+        let srcObjs : string[] = [];
+        let dstObjs : string[] = [];
+        let loc = cmd.location;
 
-    // Command handler
-    if (cmd.command === "take") {
-        srcObjs = findObjects(cmd.entity, state);
-        for(let src of srcObjs)
-          interpretation.push([{polarity: true,
-              relation: "holding", args: [src]}]);
+        // Command handler
+        if (cmd.command === "take") {
+            srcObjs = findObjects(cmd.entity, state);
+            for(let src of srcObjs)
+              interpretation.push([{polarity: true,
+                  relation: "holding", args: [src]}]);
 
-    } else if (cmd.command === "put") {
-        dstObjs = findObjects(cmd.location.entity, state);
-        interpretation = [[{polarity: true, relation: loc.relation,
-        args: [state.holding, dstObjs[0]]}]];
+        } else if (cmd.command === "put") {
+            dstObjs = findObjects(cmd.location.entity, state);
+            interpretation = [[{polarity: true, relation: loc.relation,
+            args: [state.holding, dstObjs[0]]}]];
 
-    } else if (cmd.command === "move") {
-        srcObjs = findObjects(cmd.entity, state);
-        dstObjs = findObjects(cmd.location.entity, state);
+        } else if (cmd.command === "move") {
+            srcObjs = findObjects(cmd.entity, state);
+            dstObjs = findObjects(cmd.location.entity, state);
 
-        let test : collections.Dictionary<string,string[]> =
-            new collections.Dictionary<string,string[]>();
+            // Need a Dictionary to differate the destination from sources
+            let hash : collections.Dictionary<string,string[]> =
+                new collections.Dictionary<string,string[]>();
 
-        for(let src of srcObjs)
-          test.setValue(src,dstObjs);
+            // Instantiate the Dictionary
+            for(let src of srcObjs)
+              hash.setValue(src,dstObjs);
 
-        let isSrcComplex = cmd.entity.object.location != null;
-        let isDstComplex = cmd.location.entity.object.location != null;
-        if (!isSrcComplex && !isDstComplex)
-        if(loc.relation === "inside")
+            // Complex datatype?
+            let isSrcComplex = cmd.entity.object.location != null;
+            let isDstComplex = cmd.location.entity.object.location != null;
+            if (!isSrcComplex && !isDstComplex)
+                if(loc.relation === "inside")
+                    hash.forEach(function(src) {
+                        let dstObs = hash.getValue(src);
+                        let filter : boolean = true;
+                        for(let dst of dstObs)
+                            for (let stack of state.stacks){
+                                let ystack = stack.indexOf(src);
+                                let xstack = stack.indexOf(dst);
+                                let dst_obj = state.objects[dst];
+                                let src_obj = state.objects[src];
+                                // src is not in stack but dst is
+                                if (xstack > -1 && ystack < 0) {
+                                    filter = false;
+                                    if (src_obj.size === "large" && dst_obj.size === "small")
+                                        hash.setValue(src,dstObs = dstObs.filter(x => x !== dst));
+                                }
+                            }
+                        if (!dstObs.length)
+                            throw "";
+                        if (filter)
+                            hash.remove(src);
+                    });
+                else if (loc.relation === "ontop")
+                    hash.forEach(function(src){
+                        let dstObs = hash.getValue(src);
+                        let filter : boolean = true;
+                        for(let dst of dstObs)
+                            for (let stack of state.stacks){
+                                let ystack = stack.indexOf(src);
+                                let xstack = stack.indexOf(dst);
+                                filter = !((xstack > -1 && xstack+1 === ystack
+                                    || dst === 'floor' && ystack === 0));
+                            }
+                        if (filter)
+                            hash.remove(src);
+                    });
 
-            test.forEach(function(src){
-                let dstObs = test.getValue(src);
-                let filter : boolean = true;
-                for(let dst of dstObs)
-                    for (let stack of state.stacks){
-                        let ystack = stack.indexOf(src);
-                        let xstack = stack.indexOf(dst);
-                        let dst_obj = state.objects[dst];
-                        let src_obj = state.objects[src];
-                        // src is not in stack but dst is
-                        if (xstack > -1 && ystack < 0) {
-                            filter = false;
-                        if (src_obj.size === "large" && dst_obj.size === "small")
-                            test.setValue(src,dstObs = dstObs.filter(x => x !== dst));
-                        }
-                    }
-                if (!dstObs.length) throw "";
-                if (filter) test.remove(src);
+            if(hash.isEmpty())
+                throw "";
+
+            hash.forEach(function(src) {
+                for(let dst of hash.getValue(src))
+                    if(src !== dst)
+                        interpretation.push([{polarity: true, relation: loc.relation,
+                            args: [src, dst]}]);
             });
-        else if (loc.relation === "ontop") {
-            test.forEach(function(src){
-                let dstObs = test.getValue(src);
-                let filter : boolean = true;
-                for(let dst of dstObs)
+
+        }
+        return interpretation;
+    }
+
+    // Goes through the list of objects and returns the ones matching the arguments.
+    //If there is no match it returns an empty string.
+    function findObjects(entity : Parser.Entity, state : WorldState) : string[] {
+        let obj : Parser.Object = entity.object;
+        let isComplex = obj.location != null;
+        let asd = isComplex ? obj.object : obj;
+        let objForm = asd.form;
+        let objColor = asd.color;
+        let objSize = asd.size;
+
+        let objects : string[] = Array.prototype.concat.apply([], state.stacks);
+
+        if(state.holding)
+            objects.push(state.holding);
+
+        // Filter out all the objects that do not match the given descriptons
+        objects = objects.filter(function(y) {
+            let x : ObjectDefinition = state.objects[y];
+            return ((objForm === x.form || objForm === 'anyform' ) &&
+                    (objColor === x.color || objColor === null) &&
+                    (objSize === x.size || objSize === null))
+        });
+
+        if(objForm === 'floor')
+            objects.push('floor');
+
+        if(!isComplex)
+            if (!objects.length)
+                throw "";
+            else
+                return objects;
+
+        let loc           = obj.location;
+        let loc_entity    = loc.entity;
+        let loc_relation  = loc.relation;
+        let loc_objects   = findObjects(loc_entity,state);
+        let loc_quantifier = loc_entity.quantifier;
+
+        // Quantifier handler
+        if(loc_quantifier === "any") {
+          // any of these loc_objects?
+        } else if(loc_quantifier === "the" && loc_objects.length !== 1)
+            throw "The Quantifier \"the\" can only refer to a specific object"
+
+        // Relation handler
+        if(loc_relation === "inside") {
+            //filter out those objects that ain't in the stack of a object
+            objects = objects.filter( function (y) {
+                for (let x of loc_objects)
                     for (let stack of state.stacks){
-                        let ystack = stack.indexOf(src);
-                        let xstack = stack.indexOf(dst);
-                        if (xstack > -1 && xstack+1 === ystack
-                        || dst === 'floor' && ystack === 0)
-                          filter = false;
+                        let ystack = stack.indexOf(y);
+                        let xstack = stack.indexOf(x);
+                        if (xstack > -1 && ystack > xstack)
+                            return true;
                     }
-                if (filter) test.remove(src);
+                return false;
+            });
+        } else if (loc_relation === "ontop") {
+            // filter out those that ain't ontop of the specified object
+            objects = objects.filter( function (y) {
+                for (let x of loc_objects)
+                    for (let stack of state.stacks){
+                        let ystack = stack.indexOf(y);
+                        let xstack = stack.indexOf(x);
+                        // loc_object in stack and object is ontop
+                        if (xstack > -1 && xstack+1 === ystack ||
+                            x === 'floor' && ystack === 0)
+                            return true;
+                    }
+                return false;
             });
         }
-
-        if(test.isEmpty()) throw "";
-
-        test.forEach(function(src) {
-            for(let dst of test.getValue(src))
-                if(src !== dst)
-                    interpretation.push([{polarity: true, relation: loc.relation,
-                     args: [src, dst]}]);
-        });
-
-    }
-    return interpretation;
-  }
-
-  // Goes through the list of objects and returns the ones matching the arguments.
-  //If there is no match it returns an empty string.
-  function findObjects(entity : Parser.Entity, state : WorldState) : string[] {
-      let obj : Parser.Object = entity.object;
-      let isComplex = obj.location != null;
-      let asd = isComplex ? obj.object : obj;
-      let objForm = asd.form;
-      let objColor = asd.color;
-      let objSize = asd.size;
-
-      let objects : string[] = Array.prototype.concat.apply([], state.stacks);
-
-      if(state.holding)
-          objects.push(state.holding);
-
-      // Filter out all the objects that do not match the given descriptons
-      objects = objects.filter(function(y) {
-          let x : ObjectDefinition = state.objects[y];
-          return ((objForm === x.form || objForm === 'anyform' ) &&
-          (objColor === x.color || objColor === null) &&
-          (objSize === x.size || objSize === null))
-      });
-
-      if(objForm === 'floor')
-          objects.push('floor');
-
-      if(!isComplex)
+        if (!objects.length)
+            throw "";
         return objects;
-
-      let loc           = obj.location;
-      let loc_entity    = loc.entity;
-      let loc_relation  = loc.relation;
-      let loc_objects   = findObjects(loc_entity,state);
-      let loc_quantifier = loc_entity.quantifier;
-
-      // Quantifier handler
-      if(loc_quantifier === "any") {
-          // any of these loc_objects?
-      } else if(loc_quantifier === "the" && loc_objects.length !== 1) {
-            throw "The Quantifier \"the\" can only refer to a specific object"
-      }
-
-      // Relation handler
-      if(loc_relation === "inside") {
-          //filter out those objects that ain't in the stack of a object
-          objects = objects.filter( function (y) {
-              for (let x of loc_objects)
-                for (let stack of state.stacks){
-                    let ystack = stack.indexOf(y);
-                    let xstack = stack.indexOf(x);
-                    if (xstack > -1 && ystack > xstack)
-                        return true;
-                }
-            return false;
-            })
-      } else if (loc_relation === "ontop") {
-          // filter out those that ain't ontop of the specified object
-          objects = objects.filter( function (y) {
-              for (let x of loc_objects)
-                for (let stack of state.stacks){
-                    let ystack = stack.indexOf(y);
-                    let xstack = stack.indexOf(x);
-                    if (xstack > -1 && xstack+1 === ystack
-                    || x === 'floor' && ystack === 0)
-                        return true;
-                }
-            return false;
-        });
-      }
-      if (!objects.length)
-        throw "";
-    return objects;
-  }
+    }
 }
