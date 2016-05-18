@@ -55,19 +55,52 @@ function aStarSearch<Node> (
     heuristics : (n:Node) => number,
     timeout : number
 ) : SearchResult<Node> {
-    // A dummy search result: it just picks the first possible neighbour
     var result : SearchResult<Node> = {
-        path: [start],
+        path: [],
         cost: 0
     };
-    while (result.path.length < 3) {
-        var edge : Edge<Node> = graph.outgoingEdges(start) [0];
-        if (! edge) break;
-        start = edge.to;
-        result.path.push(start);
-        result.cost += edge.cost;
+    // f(n) = g(n) + h(n)
+    var f = (n : Node) : number => intermediates.getValue(n) + heuristics(n);
+    // stores prospect nodes ordered by f(n)
+    var prospects : collections.PriorityQueue<Node> =
+        new collections.PriorityQueue<Node>((a,b) => (f(a) < f(b)) ? 1
+                                            : ((f(a) == f(b)) ? 0 : -1));
+    // stores intermediate costs for reaching a node in a graph
+    var intermediates : collections.Dictionary<Node,number> =
+        new collections.Dictionary<Node,number>();
+    // stores pairs of nodes resulting in cheapest path
+    var path : collections.Dictionary<Node,Node> =
+        new collections.Dictionary<Node,Node>();
+
+    // preliminaries for searching
+    var current : Node = start;
+    intermediates.setValue(current,0);
+    prospects.enqueue(current);
+    var endTime = Date.now() + (timeout * 1000);
+    // search for a path until goal is reached or time is up
+    while(!goal(current) && (Date.now() < endTime)) {
+        // iterate through all edges from current node
+        for (var edge of graph.outgoingEdges(current)) {
+            // calculate the cost of traveling the edge to next node
+            var cost : number = intermediates.getValue(current)
+                                + edge.cost;
+            // if end node not reached or cost is lower than previous travel
+            if (!intermediates.containsKey(edge.to)
+                || cost < intermediates.getValue(edge.to)) {
+                // set new cost, add end to prospects and update cheapest pair
+                intermediates.setValue(edge.to,cost);
+                prospects.enqueue(edge.to);
+                path.setValue(edge.to,current);
+            }
+        }
+        current = prospects.dequeue();
     }
+    // set cost of reaching goal and backtrack path from goal
+    result.cost = intermediates.getValue(current);
+    while(graph.compareNodes(path.getValue(current),start) != 0) {
+        result.path.unshift(current);
+        current = path.getValue(current);
+    }
+    result.path.unshift(current);
     return result;
 }
-
-
