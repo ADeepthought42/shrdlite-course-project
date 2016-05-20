@@ -81,26 +81,22 @@ module Planner {
         //TODO Define Graph & Node in our world
             //TODO Define Node
                 // We call it Node for the simplicity
-            class Node {
-                //TODO What should Node hold?
-                constructor(){};
-            }
 
             //TODO class that implements interface Graph<Node>
-            class PlanGraph implements Graph<Node>{
+            class PlanGraph implements Graph<WorldState>{
                 //TODO
                 constructor(){};
 
                 //TODO outgoingEdges(node : Node) : Edge<Node>[];
-                outgoingEdges(node : Node) : Edge<Node>[] {
-                    let edges : Edge<Node>[] = [];
+                outgoingEdges(node : WorldState) : Edge<WorldState>[] {
+                    let edges : Edge<WorldState>[] = [];
                     // TODO
                     return edges;
                 }
 
                 //TODO compareNodes : collections.ICompareFunction<Node>;
-                compareNodes : collections.ICompareFunction<Node> =
-                    (x : Node, y : Node) : number => {
+                compareNodes : collections.ICompareFunction<WorldState> =
+                    (x : WorldState, y : WorldState) : number => {
                         return 0;
                     };
             }
@@ -117,7 +113,7 @@ module Planner {
             //TODO @Param ?
                 // interpretation : Interpreter.DNFFormula,
                 // state : WorldState
-        function start() : Node {
+        function start() : WorldState {
             return null;
         }
 
@@ -125,8 +121,8 @@ module Planner {
             //TODO @Param ?
                 // interpretation : Interpreter.DNFFormula,
                 // state : WorldState
-        function goal() : (n:Node) => boolean {
-            return (n : Node) => {
+        function goal() : (n:WorldState) => boolean {
+            return (n : WorldState) => {
                 return true;
             };
         }
@@ -135,8 +131,8 @@ module Planner {
             //TODO @Param ?
                 // interpretation : Interpreter.DNFFormula,
                 // state : WorldState
-        function heuristic() : (n:Node) => number {
-            return (n : Node) => {
+        function heuristic() : (n:WorldState) => number {
+            return (n : WorldState) => {
                 return 0;
             };
         }
@@ -149,7 +145,7 @@ module Planner {
 
     // A* result must be converted to string []
     //TODO SearchResult<Node> to string []
-    function interpret(result : SearchResult<Node>) : string [] {
+    function interpret(result : SearchResult<WorldState>) : string [] {
 
         // Only need path?
         let path : Node[]  = result.path;
@@ -167,7 +163,7 @@ module Planner {
         state : WorldState) : string[]
     {
         return interpret(
-            aStarSearch<Node>(
+            aStarSearch<WorldState>(
                 // TODO Assign parameters to those that needs it
                 graph(),
                 start(),
