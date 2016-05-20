@@ -236,7 +236,8 @@ module Planner {
     function planInterpretation(
         interpretation : Interpreter.DNFFormula,
         state : WorldState) : string[]
-    {
+    {   if(state)
+            throw Interpreter.stringify({interpretation : interpretation,input : "",parse : null});
         return interpret(
             aStarSearch<WorldState>(
                 // TODO Assign parameters to those that needs it

@@ -118,6 +118,7 @@ possible parse of the command. No need to change this one.
         let srcObjs : string[] = [];
         let dstObjs : string[] = [];
         let loc = cmd.location;
+        console.log(state.objects['e']);
 
         // Command handler
         if (cmd.command === "take") {
@@ -215,7 +216,7 @@ possible parse of the command. No need to change this one.
 
         // Filter out all the objects that do not match the given descriptons
         objects = objects.filter(function(y : string) {
-            if (!y) return true;
+            if (!y) return false;
             let x : ObjectDefinition = state.objects[y];
             //if (typeof x === 'undefined') throw y;
             return ((objForm === x.form || objForm === 'anyform' ) &&
@@ -265,8 +266,8 @@ possible parse of the command. No need to change this one.
                         let ystack = stack.indexOf(y);
                         let xstack = stack.indexOf(x);
                         // loc_object in stack and object is ontop
-                        if (xstack > -1 && xstack+1 === ystack ||
-                            x === 'floor' && ystack === 0)
+                        if ((xstack > -1 && xstack+1 === ystack) ||
+                            (x === 'floor' && ystack === 0))
                             return true;
                     }
                 return false;
