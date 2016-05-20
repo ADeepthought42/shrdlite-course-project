@@ -155,16 +155,18 @@ module Planner {
 
         for (var i = 0; i < path.length - 1; i++) {
             var cs : WorldState = path[i];
-            var ns : WorldState = path[i+1]
+            var ns : WorldState = path[i+1];
 
             if(ns.arm < cs.arm)
                 plan.push("l");
-            if(ns.arm > cs.arm)
+            else if(ns.arm > cs.arm)
                 plan.push("r");
-            if(ns.holding && !cs.holding)
+            else if(ns.holding && !cs.holding)
                 plan.push("p");
-            if(!ns.holding && cs.holding)
+            else if(!ns.holding && cs.holding)
                 plan.push("d");
+            else
+                throw "";
         }
 
         return plan;
