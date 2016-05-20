@@ -148,12 +148,24 @@ module Planner {
     function interpret(result : SearchResult<WorldState>) : string [] {
 
         // Only need path?
-        let path : Node[]  = result.path;
+        let path : WorldState[]  = result.path;
 
         // The plan that we will return
         let plan : string[] = [];
 
-        // TODO
+        for (var i = 0; i < path.length - 1; i++) {
+            var cs : WorldState = path[i];
+            var ns : WorldState = path[i+1]
+
+            if(ns.arm < cs.arm)
+                plan.push("l");
+            if(ns.arm > cs.arm)
+                plan.push("r");
+            if(ns.holding && !cs.holding)
+                plan.push("p");
+            if(!ns.holding && cs.holding)
+                plan.push("d");
+        }
 
         return plan;
     }
