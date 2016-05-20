@@ -214,8 +214,10 @@ possible parse of the command. No need to change this one.
             objects.push(state.holding);
 
         // Filter out all the objects that do not match the given descriptons
-        objects = objects.filter(function(y) {
+        objects = objects.filter(function(y : string) {
+            if (!y) return true;
             let x : ObjectDefinition = state.objects[y];
+            //if (typeof x === 'undefined') throw y;
             return ((objForm === x.form || objForm === 'anyform' ) &&
                     (objColor === x.color || objColor === null) &&
                     (objSize === x.size || objSize === null))
@@ -226,7 +228,7 @@ possible parse of the command. No need to change this one.
 
         if(!isComplex)
             if (!objects.length)
-                throw "";
+                throw "Objects empty";
             else
                 return objects;
 

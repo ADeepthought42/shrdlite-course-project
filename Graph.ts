@@ -77,6 +77,7 @@ function aStarSearch<Node> (
     intermediates.setValue(current,0);
     prospects.enqueue(current);
     var endTime = Date.now() + (timeout * 1000);
+
     // search for a path until goal is reached or time is up
     while(!goal(current) && (Date.now() < endTime)) {
         // iterate through all edges from current node
@@ -94,6 +95,8 @@ function aStarSearch<Node> (
             }
         }
         current = prospects.dequeue();
+         if (typeof current === 'undefined')
+            break;
     }
     // set cost of reaching goal and backtrack path from goal
     result.cost = intermediates.getValue(current);

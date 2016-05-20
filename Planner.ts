@@ -88,43 +88,104 @@ module Planner {
                 constructor(){};
 
                 //TODO outgoingEdges(node : Node) : Edge<Node>[];
-                outgoingEdges(node : WorldState) : Edge<WorldState>[] {
+                outgoingEdges(state : WorldState) : Edge<WorldState>[] {
                     let edges : Edge<WorldState>[] = [];
-                    // TODO
+
+                    if(state.arm > 0) {
+                        let e = new Edge<WorldState>();
+                        e.from = state;
+                        let s = state;
+                        s.arm--;
+                        e.to = s;
+                        e.cost = 1;
+                        edges.push(e);
+                    }
+                    if(state.arm < state.stacks.length) {
+                        let e = new Edge<WorldState>();
+                        e.from = state;
+                        let s = state;
+                        s.arm++;
+                        e.to = s;
+                        e.cost = 1;
+                        edges.push(e);
+                    }
+                    if (!state.holding) {
+                        let e = new Edge<WorldState>();
+                        e.from = state;
+                        let s = state;
+                        s.stacks[s.arm].push(s.holding);
+                        s.holding = "";
+                        e.to = s;
+                        e.cost = 1;
+                        edges.push(e);
+                    } else {
+                        let e = new Edge<WorldState>();
+                        e.from = state;
+                        let s = state;
+                        s.holding = s.stacks[s.arm].pop();
+                        e.to = s;
+                        e.cost = 1;
+                        edges.push(e);
+                    }
                     return edges;
                 }
 
                 //TODO compareNodes : collections.ICompareFunction<Node>;
                 compareNodes : collections.ICompareFunction<WorldState> =
-                    (x : WorldState, y : WorldState) : number => {
+                    (a : WorldState, b : WorldState) : number => {
                         return 0;
                     };
             }
 
-        //TODO Graph function Graph<Node>
-            //TODO @Param ?
-                // interpretation : Interpreter.DNFFormula,
-                // state : WorldState
-        function graph() : PlanGraph {
-            return null;
-        }
-
-        //TODO Start node function
-            //TODO @Param ?
-                // interpretation : Interpreter.DNFFormula,
-                // state : WorldState
-        function start() : WorldState {
-            return null;
-        }
 
         //TODO Goal function (n:Node) => boolean
             //TODO @Param ?
                 // interpretation : Interpreter.DNFFormula,
                 // state : WorldState
-        function goal() : (n:WorldState) => boolean {
-            return (n : WorldState) => {
-                return true;
+        function goal(conjunctions : Interpreter.DNFFormula)
+            : (n : WorldState) => boolean
+        {
+            return (state : WorldState) => {
+                let con = conjunctions[0];
+                let b :boolean = true;
+                for(let lit of con)
+                    b = b && checkLit(lit,state);
+                return b;
             };
+        }
+
+        function checkLit(lit : Interpreter.Literal,
+            state : WorldState): boolean
+        {
+
+            let rel = lit.relation;
+            let a : Pos = findPos(lit.args[0],state);
+            let b : Pos = findPos(lit.args[1],state);
+
+            return (rel === "holding" && state.holding === lit.args[0]) ||
+                (rel === "inside" && a.x === b.x && (a.y - 1) === b.y) ||
+                (rel === "above" && a.x === b.x && a.y > b.y) ||
+                (rel === "under" && a.x === b.x && a.y < b.y) ||
+                (rel === "leftof" && a.x < b.x) ||
+                (rel === "rightof" && a.x > b.x) ||
+                (rel === "beside" && Math.abs(a.x-b.x)===1);
+
+        }
+
+        interface Pos {
+            x : number;
+            y : number;
+        }
+
+        function findPos(obj : string, st : WorldState) : Pos {
+            for(let i : number = 0; i < st.stacks.length ; i++){
+                for(let j : number = 0; j < st.stacks[i].length ; j++) {
+                    if (st.stacks[i][j] === obj) {
+                        return {x : i, y: j};
+                    }
+                }
+            }
+            return {x : -2, y: -2};
         }
 
         //TODO Heuristic function (n:Node) => number
@@ -179,9 +240,9 @@ module Planner {
         return interpret(
             aStarSearch<WorldState>(
                 // TODO Assign parameters to those that needs it
-                graph(),
-                start(),
-                goal(),
+                new PlanGraph(),
+                state,
+                goal(interpretation),
                 heuristic(),
                 timeout()
             )
