@@ -78,7 +78,18 @@ function aStarSearch<Node> (
     prospects.enqueue(current);
     var endTime = Date.now() + (timeout * 1000);
     // search for a path until goal is reached or time is up
-    while(!goal(current) && (Date.now() < endTime)) {
+    while(Date.now() < endTime) {
+        current = prospects.dequeue();
+        if (goal(current)) {
+            // set cost of reaching goal and backtrack path from goal
+            result.cost = intermediates.getValue(current);
+            while(graph.compareNodes(path.getValue(current),start) != 0) {
+                result.path.unshift(current);
+                current = path.getValue(current);
+            }
+            result.path.unshift(current);
+            return result;
+        }
         // iterate through all edges from current node
         for (var edge of graph.outgoingEdges(current)) {
             // calculate the cost of traveling the edge to next node
@@ -93,14 +104,5 @@ function aStarSearch<Node> (
                 path.setValue(edge.to,current);
             }
         }
-        current = prospects.dequeue();
     }
-    // set cost of reaching goal and backtrack path from goal
-    result.cost = intermediates.getValue(current);
-    while(graph.compareNodes(path.getValue(current),start) != 0) {
-        result.path.unshift(current);
-        current = path.getValue(current);
-    }
-    result.path.unshift(current);
-    return result;
 }
