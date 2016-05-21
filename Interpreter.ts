@@ -118,7 +118,7 @@ possible parse of the command. No need to change this one.
         let srcObjs : string[] = [];
         let dstObjs : string[] = [];
         let loc = cmd.location;
-
+        console.log(cmd)
         // Command handler
         if (cmd.command === "take") {
             srcObjs = findObjects(cmd.entity, state);
@@ -160,7 +160,11 @@ possible parse of the command. No need to change this one.
                                 // src is not in stack but dst is
                                 if (xstack > -1 && ystack < 0) {
                                     filter = false;
-                                    if (src_obj.size === "large" && dst_obj.size === "small")
+                                    if (src_obj.size === "large" && dst_obj.size === "small" || 
+                                        (src_obj.form === "pyramid" || src_obj.form ==="plank" || src_obj.form === "box") && 
+                                        src_obj.size === dst_obj.size && dst_obj.form === "box")
+                                          
+
                                         hash.setValue(src,dstObs = dstObs.filter(x => x !== dst));
                                 }
                             }
