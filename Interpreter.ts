@@ -118,7 +118,6 @@ possible parse of the command. No need to change this one.
         let srcObjs : string[] = [];
         let dstObjs : string[] = [];
         let loc = cmd.location;
-        console.log(state.objects['e']);
 
         // Command handler
         if (cmd.command === "take") {

@@ -73,6 +73,64 @@ module Interpreter {
       {world: "small",
        utterance: "put a black ball in a box on the floor",
        interpretations: [["inside(f,k)"], ["ontop(f,floor)"]]
+      },
+
+/*
+"put a plank in a box": you return
+"inside(c,k) | inside(c,l) | inside(d,k) | inside(d,l) | inside(d,m)",
+where you should return "inside(d,k) | inside(d,l)"
+*/
+      {world: "medium",
+       utterance: "put a plank in a box",
+       interpretations: [["inside(d,k)","inside(d,l)"]]
+      },
+
+/*
+"put a large plank in a box": you return
+"inside(c,k) | inside(c,l)",
+and should not return anything
+*/
+
+      {world: "medium",
+       utterance: "put a large plank in a box",
+       interpretations: []
+     },
+/*
+"put a pyramid in a box": you return
+"inside(i,k) | inside(i,l) | inside(j,k) | inside(j,l) | inside(j,m)",
+where it shuold be "inside(j,k) | inside(j,l)"
+*/
+
+      {world: "medium",
+       utterance: "put a pyramid in a box",
+       interpretations: [["inside(c,k)","inside(c,l)"]]
+      },
+/*
+"put a box in a box": you return
+"inside(k,l) | inside(l,k) | inside(m,k) | inside(m,l)",
+and should return "inside(m,k) | inside(m,l)"
+*/
+      {world: "medium",
+       utterance: "put a box in a box",
+       interpretations: [["inside(m,k)","inside(m,l)"]]
+      },
+/*
+"put a large box in a box": you return
+"inside(k,l) | inside(l,k)",
+and should not return anything
+*/
+      {world: "medium",
+       utterance: "put a large box in a box",
+       interpretations: []
+      },
+/*
+"put a large box on a large brick": you return
+"ontop(k,a) | ontop(l,a)",
+but should not return anything
+*/
+      {world: "medium",
+       utterance: "put a large box in a box",
+       interpretations: []
       }
   );
 

@@ -169,7 +169,6 @@ module Planner {
                 (rel === "leftof" && a.x < b.x) ||
                 (rel === "rightof" && a.x > b.x) ||
                 (rel === "beside" && Math.abs(a.x-b.x)===1);
-
         }
 
         interface Pos {
