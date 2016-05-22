@@ -1,6 +1,7 @@
 ///<reference path="World.ts"/>
 ///<reference path="Interpreter.ts"/>
 ///<reference path="Graph.ts"/>
+///<reference path="lib/collections.ts"/>
 
 /**
 * Planner module
@@ -157,7 +158,6 @@ module Planner {
         function checkLit(lit : Interpreter.Literal,
             state : WorldState): boolean
         {
-
             let rel = lit.relation;
             let a : Pos = findPos(lit.args[0],state);
             let b : Pos = findPos(lit.args[1],state);
@@ -168,7 +168,7 @@ module Planner {
                 (rel === "under" && a.x === b.x && a.y < b.y) ||
                 (rel === "leftof" && a.x < b.x) ||
                 (rel === "rightof" && a.x > b.x) ||
-                (rel === "beside" && Math.abs(a.x-b.x)===1);
+                (rel === "beside" && Math.abs(a.x-b.x) === 1);
         }
 
         interface Pos {
@@ -235,65 +235,21 @@ module Planner {
     function planInterpretation(
         interpretation : Interpreter.DNFFormula,
         state : WorldState) : string[]
-    {   if(state)
-            throw Interpreter.stringify({interpretation : interpretation,input : "",parse : null});
-        return interpret(
-            aStarSearch<WorldState>(
-                // TODO Assign parameters to those that needs it
-                new PlanGraph(),
-                state,
-                goal(interpretation),
-                heuristic(),
-                timeout()
-            )
-        );
+    {
+
+      let t = new PlanGraph();
+      let k = aStarSearch<WorldState>(
+          // TODO Assign parameters to those that needs it
+          t,
+          state,
+          goal(interpretation),
+          heuristic(),
+          timeout()
+      );
+
+      if (k)
+        throw "planner " + collections.makeString(k.path);
+
+      return interpret(k);
     }
-
-
-    /*
-            // This function returns a dummy plan involving a random stack
-            do {
-                var pickstack = Math.floor(Math.random() * state.stacks.length);
-            } while (state.stacks[pickstack].length == 0);
-            var plan : string[] = [];
-
-            // First move the arm to the leftmost nonempty stack
-            if (pickstack < state.arm) {
-                plan.push("Moving left");
-                for (var i = state.arm; i > pickstack; i--) {
-                    plan.push("l");
-                }
-            } else if (pickstack > state.arm) {
-                plan.push("Moving right");
-                for (var i = state.arm; i < pickstack; i++) {
-                    plan.push("r");
-                }
-            }
-
-            // Then pick up the object
-            var obj = state.stacks[pickstack][state.stacks[pickstack].length-1];
-            plan.push("Picking up the " + state.objects[obj].form,
-                      "p");
-
-            if (pickstack < state.stacks.length-1) {
-                // Then move to the rightmost stack
-                plan.push("Moving as far right as possible");
-                for (var i = pickstack; i < state.stacks.length-1; i++) {
-                    plan.push("r");
-                }
-
-                // Then move back
-                plan.push("Moving back");
-                for (var i = state.stacks.length-1; i > pickstack; i--) {
-                    plan.push("l");
-                }
-            }
-
-            // Finally put it down again
-            plan.push("Dropping the " + state.objects[obj].form,
-                      "d");
-
-            return plan;
-    */
-
 }
