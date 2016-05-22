@@ -120,6 +120,7 @@ possible parse of the command. No need to change this one.
         let loc = cmd.location;
         console.log(state.objects);
         console.log(cmd);
+        
         // Command handler
         if (cmd.command === "take") {
             srcObjs = findObjects(cmd.entity, state);
@@ -158,21 +159,24 @@ possible parse of the command. No need to change this one.
                                 let ystack = stack.indexOf(src);
                                 let xstack = stack.indexOf(dst);
                                 let dst_obj = state.objects[dst];
+
+                                // Remove all cases where the target object is not a box 
+                                //(cant put source objects in destination objects that are not boxes)
                                 if (dst_obj.form !== "box") {
                                     hash.setValue(src, dstObs = dstObs.filter(x => x !== dst));
                                 }else {
                                     filter = false;
+
                                     // Remove all cases where the sizes of source pyramid, plank or box dont fit the destination 
                                     if ((src_obj.form === "pyramid" || src_obj.form === "plank" || src_obj.form === "box") &&
-                                        src_obj.size === dst_obj.size || (src_obj.size === "large" && dst_obj.size === "small"))  {
+                                        src_obj.size === dst_obj.size || (src_obj.size === "large" && dst_obj.size === "small"))  
                                         hash.setValue(src, dstObs = dstObs.filter(x => x !== dst));
-                                    }
-                
                                 }
                             }
    
                     });
                 else if (loc.relation === "ontop")
+
                     // Filter out source or destination objects that does not match the physics laws
                     hash.forEach(function(src){
                         let dstObs = hash.getValue(src);
@@ -189,6 +193,7 @@ possible parse of the command. No need to change this one.
                             hash.remove(src);
                     });
 
+            // Filter out all elements that does not match the source
             hash.forEach(function(src)  {
                 let dstObs = hash.getValue(src); 
                 hash.setValue(src, dstObs = dstObs.filter(x => x !== src));
@@ -199,6 +204,7 @@ possible parse of the command. No need to change this one.
             if(hash.isEmpty())
                 throw "";
 
+            // Add literal to list of interpretations
             hash.forEach(function(src) {
                 for(let dst of hash.getValue(src))
                     if(src !== dst)
@@ -258,6 +264,7 @@ possible parse of the command. No need to change this one.
 
         // Relation handler
         if(loc_relation === "inside") {
+
             //filter out those objects that ain't in the stack of a object
             objects = objects.filter( function (y) {
                 for (let x of loc_objects)
@@ -270,12 +277,14 @@ possible parse of the command. No need to change this one.
                 return false;
             });
         } else if (loc_relation === "ontop") {
+
             // filter out those that ain't ontop of the specified object
             objects = objects.filter( function (y) {
                 for (let x of loc_objects)
                     for (let stack of state.stacks){
                         let ystack = stack.indexOf(y);
                         let xstack = stack.indexOf(x);
+
                         // loc_object in stack and object is ontop
                         if ((xstack > -1 && xstack+1 === ystack) ||
                             (x === 'floor' && ystack === 0))
