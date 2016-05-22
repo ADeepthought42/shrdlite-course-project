@@ -103,7 +103,7 @@ where it shuold be "inside(j,k) | inside(j,l)"
 
       {world: "medium",
        utterance: "put a pyramid in a box",
-       interpretations: [["inside(c,k)","inside(c,l)"]]
+       interpretations: [["inside(j,k)","inside(j,l)"]]
       },
 /*
 "put a box in a box": you return

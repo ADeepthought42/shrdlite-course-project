@@ -118,7 +118,8 @@ possible parse of the command. No need to change this one.
         let srcObjs : string[] = [];
         let dstObjs : string[] = [];
         let loc = cmd.location;
-        console.log(cmd)
+        console.log(state.objects);
+        console.log(cmd);
         // Command handler
         if (cmd.command === "take") {
             srcObjs = findObjects(cmd.entity, state);
@@ -151,27 +152,34 @@ possible parse of the command. No need to change this one.
                     hash.forEach(function(src) {
                         let dstObs = hash.getValue(src);
                         let filter : boolean = true;
-                        for(let dst of dstObs)
-                            for (let stack of state.stacks){
+                        let src_obj = state.objects[src];
+                        for (let dst of dstObs)
+                            for (let stack of state.stacks) {
                                 let ystack = stack.indexOf(src);
                                 let xstack = stack.indexOf(dst);
                                 let dst_obj = state.objects[dst];
-                                let src_obj = state.objects[src];
-                                // src is not in stack but dst is
-                                if (xstack > -1 && ystack < 0) {
+                                if (dst_obj.form !== "box") {
+                                    hash.setValue(src, dstObs = dstObs.filter(x => x !== dst));
+                                    // src is not in stack but dst is
+                                }else if (xstack > -1 && ystack < 0 || ystack >= xstack) {
                                     filter = false;
-                                    if (src_obj.size === "large" && dst_obj.size === "small" || 
-                                        (src_obj.form === "pyramid" || src_obj.form ==="plank" || src_obj.form === "box") && 
-                                        src_obj.size === dst_obj.size && dst_obj.form === "box")
-                                          
 
+                                    if ((src_obj.form === "pyramid" || src_obj.form === "plank" || src_obj.form === "box") &&
+                                        src_obj.size === dst_obj.size) {
+                                        hash.setValue(src, dstObs = dstObs.filter(x => x !== dst));
+                                        console.log(src);
+                                        console.log(dst);
+                                    }
+
+                                    if (src_obj.size === "large" && dst_obj.size === "small") {
                                         hash.setValue(src,dstObs = dstObs.filter(x => x !== dst));
+                                    }
                                 }
                             }
-                        if (!dstObs.length)
-                            throw "";
-                        if (filter)
+
+                        if (!dstObs.length || filter) 
                             hash.remove(src);
+                            
                     });
                 else if (loc.relation === "ontop")
                     hash.forEach(function(src){
@@ -188,6 +196,13 @@ possible parse of the command. No need to change this one.
                             hash.remove(src);
                     });
 
+            hash.forEach(function(src)  {
+                let dstObs = hash.getValue(src); 
+                hash.setValue(src, dstObs = dstObs.filter(x => x !== src));
+                if (!dstObs.length)
+                    hash.remove(src);
+            });
+            console.log(hash.toString());
             if(hash.isEmpty())
                 throw "";
 
