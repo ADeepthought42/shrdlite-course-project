@@ -4,10 +4,6 @@
 /** Graph module
 *
 *  Types for generic A\* implementation.
-*
-*  *NB.* The only part of this module
-*  that you should change is the `aStarSearch` function. Everything
-*  else should be used as-is.
 */
 
 /** An edge in a graph. */
@@ -92,13 +88,8 @@ class Visited<Node>{
 }
 
 /**
-* A\* search implementation, parameterised by a `Node` type. The code
-* here is just a template; you should rewrite this function
-* entirely. In this template, the code produces a dummy search result
-* which just picks the first possible neighbour.
-*
-* Note that you should not change the API (type) of this function,
-* only its body.
+* A\* search implementation, parameterised by a `Node` type. 
+* 
 * @param graph The graph on which to perform A\* search.
 * @param start The initial node.
 * @param goal A function that returns true when given a goal node. Used to determine if the algorithm has reached the goal.
