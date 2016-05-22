@@ -80,63 +80,109 @@ module Planner {
 
      //TODO Integration with A* search algorithm and the world
         //TODO Define Graph & Node in our world
-            //TODO Define Node
-                // We call it Node for the simplicity
 
-            //TODO class that implements interface Graph<Node>
-            class PlanGraph implements Graph<WorldState>{
-                //TODO
-                constructor(){};
+    interface Position {
+        /**
+         * x represents a stack
+         * y represents the depth of an object in a stack,
+         * i.e. y=0 for the top object
+         */
+        x: number;
+        y: number;
+    }
 
-                //TODO outgoingEdges(node : Node) : Edge<Node>[];
-                outgoingEdges(state : WorldState) : Edge<WorldState>[] {
-                    let edges : Edge<WorldState>[] = [];
+   /**
+    * TODO Define Node, Node is a symbolic representation that can
+    * be anything really. Can be almost identical to GridNode. Here
+    * it is called State, as in something we want to search for in
+    * a graph.
+    */
+    class State {
+        constructor(
+            public pos : Position
+        ) {}
 
-                    if(state.arm > 0) {
-                        let e = new Edge<WorldState>();
-                        e.from = state;
-                        let s = state;
-                        s.arm--;
-                        e.to = s;
-                        e.cost = 1;
-                        edges.push(e);
-                    }
-                    if(state.arm < state.stacks.length) {
-                        let e = new Edge<WorldState>();
-                        e.from = state;
-                        let s = state;
-                        s.arm++;
-                        e.to = s;
-                        e.cost = 1;
-                        edges.push(e);
-                    }
-                    if (!state.holding) {
-                        let e = new Edge<WorldState>();
-                        e.from = state;
-                        let s = state;
-                        s.stacks[s.arm].push(s.holding);
-                        s.holding = "";
-                        e.to = s;
-                        e.cost = 1;
-                        edges.push(e);
-                    } else {
-                        let e = new Edge<WorldState>();
-                        e.from = state;
-                        let s = state;
-                        s.holding = s.stacks[s.arm].pop();
-                        e.to = s;
-                        e.cost = 1;
-                        edges.push(e);
-                    }
-                    return edges;
-                }
+        compareTo(other: State) : number {
+            return 0;
+        }
+    }
 
-                //TODO compareNodes : collections.ICompareFunction<Node>;
-                compareNodes : collections.ICompareFunction<WorldState> =
-                    (a : WorldState, b : WorldState) : number => {
-                        return 0;
-                    };
+   /**
+    * TODO class that implements interface Graph<Node>
+    * The graph should consist of State, but take the current WorldState
+    * as an argument at creation. Intuitively we should look at the World
+    * as upside down when creating the graph. Each Stack in WorldState
+    * corresponds to the x:position and top object/state in any Stack
+    * should correspond to y=1:position, as we need to have one row for
+    * moving the arm.
+    */
+    class PlanGraph implements Graph<State>{
+        //TODO
+        constructor(public currentState : WorldState) {
+            //build graph
+        }
+
+        /**
+         * TODO outgoingEdges(node : Node) : Edge<Node>[];
+         * When creating edges we should consider edges as possible moves.
+         * This creates a very similar construct of the graph as in the
+         * GridGraph, i.e. 4 possible paths to create. An initial thought
+         * about how this is accomplished considers translating commands to
+         * edges directly. Left = edge left, Right = edge right, Pick = edge
+         * up, and Drop = edge down. This can be done at instantiation by,
+         * for example, creating "Walls" as in GridGraph for all x where an
+         * object can't be dropped.
+         */
+        outgoingEdges(state : State) : Edge<State>[] {
+            let edges : Edge<State>[] = [];
+
+            if(this.currentState.arm > 0) {
+                edges.push({from:state,
+                            to:state,
+                            cost:1});
+               // let e = new Edge<State>();
+               // e.from = state;
+               // let s = state;
+               // s.arm--;
+               // e.to = s;
+               // e.cost = 1;
+               // edges.push(e);
             }
+            if(this.currentState.arm < this.currentState.stacks.length) {
+                let e = new Edge<State>();
+               // e.from = state;
+               // let s = state;
+               // s.arm++;
+               // e.to = s;
+               // e.cost = 1;
+               // edges.push(e);
+            }
+            if (!this.currentState.holding) {
+                let e = new Edge<State>();
+               // e.from = state;
+               // let s = state;
+               // s.stacks[s.arm].push(s.holding);
+               // s.holding = "";
+               // e.to = s;
+               // e.cost = 1;
+               // edges.push(e);
+            } else {
+                let e = new Edge<State>();
+               // e.from = state;
+               // let s = state;
+               // s.holding = s.stacks[s.arm].pop();
+               // e.to = s;
+               // e.cost = 1;
+               // edges.push(e);
+            }
+            return edges;
+        }
+
+        //TODO compareNodes : collections.ICompareFunction<Node>;
+        compareNodes(a : State, b : State) : number {
+                return a.compareTo(b);
+        };
+    }
 
 
         //TODO Goal function (n:Node) => boolean
