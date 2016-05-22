@@ -33,6 +33,64 @@ class SearchResult<Node> {
     cost : number;
 }
 
+/** A wrapper class providing extra fields for A*Search. */
+class Wrapper<Node>{
+    parent: Node=null;
+    value : Node;
+    gRank : number;
+    fRank : number;
+    hRank : number;
+}
+
+/**
+ * Extension for Set providing transparant use of needed Set methods
+ *  and storing information about wrapped nodes.
+ */
+class Visited<Node>{
+    private set : collections.Set<Node>;
+    protected table: {[key:string]: Wrapper<Node>};
+
+    constructor() {
+        this.set = new collections.Set<Node>();
+        this.table = {};
+    }
+
+    setValue(WrappedNode : Wrapper<Node>) : boolean {
+        this.table['$'+WrappedNode.value.toString()] = WrappedNode;
+        return this.set.add(WrappedNode.value);
+    }
+
+    update(parent:Node, value:Node, gDiff:number) {
+        this.table['$'+value.toString()].gRank -= gDiff;
+        this.table['$'+value.toString()].parent = parent;
+        this.table['$'+value.toString()].fRank -= gDiff;
+    }
+
+    contains(node : Node) : boolean {
+        return this.set.contains(node);
+    }
+
+    getFRank(node : Node) : number {
+        var wrapper : Wrapper<Node> = this.table['$'+node.toString()];
+        return wrapper.fRank;
+    }
+
+    getGRank(node : Node) : number {
+        var wrapper : Wrapper<Node> = this.table['$'+node.toString()];
+        return wrapper.gRank;
+    }
+
+    getHRank(node : Node) : number {
+        var wrapper : Wrapper<Node> = this.table['$'+node.toString()];
+        return wrapper.hRank;
+    }
+
+    getParent(node : Node) : Node {
+        var wrapper : Wrapper<Node> = this.table['$'+node.toString()];
+        return wrapper.parent;
+    }
+}
+
 /**
 * A\* search implementation, parameterised by a `Node` type. The code
 * here is just a template; you should rewrite this function
@@ -55,52 +113,62 @@ function aStarSearch<Node> (
     heuristics : (n:Node) => number,
     timeout : number
 ) : SearchResult<Node> {
+    var endTime = Date.now() + (timeout * 1000);
     var result : SearchResult<Node> = {
         path: [],
-        cost: 0
+        cost: -1
     };
-    // f(n) = g(n) + h(n)
-    var f = (n : Node) : number => intermediates.getValue(n) + heuristics(n);
-    // stores prospect nodes ordered by f(n)
-    var prospects : collections.PriorityQueue<Node> =
+    var visited : Visited<Node> = new Visited<Node>();
+    var f = (n : Node) : number => visited.getFRank(n);
+    var open : collections.PriorityQueue<Node> =
         new collections.PriorityQueue<Node>((a,b) => (f(a) < f(b)) ? 1
                                             : ((f(a) == f(b)) ? 0 : -1));
-    // stores intermediate costs for reaching a node in a graph
-    var intermediates : collections.Dictionary<Node,number> =
-        new collections.Dictionary<Node,number>();
-    // stores pairs of nodes resulting in cheapest path
-    var path : collections.Dictionary<Node,Node> =
-        new collections.Dictionary<Node,Node>();
+    // Set up starting node for searching
+    var hRank : number = heuristics(start);
+    visited.setValue({
+        parent:null,
+        value:start,
+        gRank:0,
+        hRank:hRank,
+        fRank:0+hRank
+    });
+    open.enqueue(start);
 
-    // preliminaries for searching
-    var current : Node = start;
-    intermediates.setValue(current,0);
-    prospects.enqueue(current);
-    var endTime = Date.now() + (timeout * 1000);
-    // search for a path until goal is reached or time is up
-    while(!goal(current) && (Date.now() < endTime)) {
-        // iterate through all edges from current node
+    // search for a goal until no more open nodes exist or time is up
+    while(!open.isEmpty() && Date.now() < endTime) {
+        var current : Node = open.dequeue();
+
+        if (goal(current)) {
+            // Reached goal, update SearchResult and return
+            result.cost = visited.getGRank(current);
+            while(current){
+                result.path.unshift(current);
+                current = visited.getParent(current);
+            }
+            return result;
+        }
+
+        // Iterate over all edges from current node
         for (var edge of graph.outgoingEdges(current)) {
             // calculate the cost of traveling the edge to next node
-            var cost : number = intermediates.getValue(current)
-                                + edge.cost;
-            // if end node not reached or cost is lower than previous travel
-            if (!intermediates.containsKey(edge.to)
-                || cost < intermediates.getValue(edge.to)) {
-                // set new cost, add end to prospects and update cheapest pair
-                intermediates.setValue(edge.to,cost);
-                prospects.enqueue(edge.to);
-                path.setValue(edge.to,current);
+            var cost : number = visited.getGRank(current) + edge.cost;
+            if (!visited.contains(edge.to)) {
+                // New node found, add it to visited with what we know
+                var hRank : number = heuristics(edge.to);
+                visited.setValue({parent:current,
+                                 value:edge.to,
+                                 gRank:cost,
+                                 hRank:hRank,
+                                 fRank:cost+hRank
+                });
+                open.enqueue(edge.to);
+            } else if (cost < visited.getGRank(edge.to)) {
+                // Cheaper path found, update previous values accordingly
+                visited.update(current,edge.to,visited.getGRank(edge.to)-cost);
+                open.enqueue(edge.to);
             }
         }
-        current = prospects.dequeue();
     }
-    // set cost of reaching goal and backtrack path from goal
-    result.cost = intermediates.getValue(current);
-    while(graph.compareNodes(path.getValue(current),start) != 0) {
-        result.path.unshift(current);
-        current = path.getValue(current);
-    }
-    result.path.unshift(current);
+    // No path exist or time is up, return empty path with cost = -1
     return result;
 }
