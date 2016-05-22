@@ -160,28 +160,20 @@ possible parse of the command. No need to change this one.
                                 let dst_obj = state.objects[dst];
                                 if (dst_obj.form !== "box") {
                                     hash.setValue(src, dstObs = dstObs.filter(x => x !== dst));
-                                    // src is not in stack but dst is
-                                }else if (xstack > -1 && ystack < 0 || ystack >= xstack) {
+                                }else {
                                     filter = false;
-
+                                    // Remove all cases where the sizes of source pyramid, plank or box dont fit the destination 
                                     if ((src_obj.form === "pyramid" || src_obj.form === "plank" || src_obj.form === "box") &&
-                                        src_obj.size === dst_obj.size) {
+                                        src_obj.size === dst_obj.size || (src_obj.size === "large" && dst_obj.size === "small"))  {
                                         hash.setValue(src, dstObs = dstObs.filter(x => x !== dst));
-                                        console.log(src);
-                                        console.log(dst);
                                     }
-
-                                    if (src_obj.size === "large" && dst_obj.size === "small") {
-                                        hash.setValue(src,dstObs = dstObs.filter(x => x !== dst));
-                                    }
+                
                                 }
                             }
-
-                        if (!dstObs.length || filter) 
-                            hash.remove(src);
-                            
+   
                     });
                 else if (loc.relation === "ontop")
+                    // Filter out source or destination objects that does not match the physics laws
                     hash.forEach(function(src){
                         let dstObs = hash.getValue(src);
                         let filter : boolean = true;
@@ -192,6 +184,7 @@ possible parse of the command. No need to change this one.
                                 filter = !((xstack > -1 && xstack+1 === ystack
                                     || dst === 'floor' && ystack === 0));
                             }
+                       
                         if (filter)
                             hash.remove(src);
                     });
