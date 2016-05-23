@@ -213,8 +213,10 @@ possible parse of the command. No need to change this one.
                                 else {
                                     filter = false;
 
+                                    
+
                                     if ((src_obj.size === "large" && dst_obj.size === "small") ||
-                                        (src_obj.form == "box" && (dst_obj.form === "brick" || dst_obj.form === "pyramid") && dst_obj.size === "small") ||
+                                        (src_obj.form === "box" && (dst_obj.form === "brick" || dst_obj.form === "pyramid") && dst_obj.size === "small") ||
                                         (src_obj.form === "box" && src_obj.size === "large" && dst_obj.form === "pyramid" && dst_obj.size === "large") ||
                                         (src_obj.form === "ball" && dst_obj.form!== "box" && dst_obj.form !== "floor"))
 
