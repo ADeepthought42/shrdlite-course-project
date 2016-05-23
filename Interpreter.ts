@@ -149,6 +149,7 @@ possible parse of the command. No need to change this one.
             let isSrcComplex = cmd.entity.object.location != null;
             let isDstComplex = cmd.location.entity.object.location != null;
             if (!isSrcComplex && !isDstComplex)
+                //Objects are “inside” boxes, but “ontop” of other objects.
                 if(loc.relation === "inside")
                     hash.forEach(function(src) {
                         let dstObs = hash.getValue(src);
@@ -160,12 +161,20 @@ possible parse of the command. No need to change this one.
                                 let xstack = stack.indexOf(dst);
                                 let dst_obj = state.objects[dst];
 
+
+
                                 // Remove all cases where the target object is not a box 
                                 //(cant put source objects in destination objects that are not boxes)
                                 if (dst_obj.form !== "box") {
                                     hash.setValue(src, dstObs = dstObs.filter(x => x !== dst));
                                 }else {
                                     filter = false;
+
+                                    /*
+                                    (X)Balls must be in boxes or on the floor, otherwise they roll away.
+                                    (X)Small objects cannot support large objects.
+                                    (X)Boxes cannot contain pyramids, planks or boxes of the same size.
+                                    */
 
                                     // Remove all cases where the sizes of source pyramid, plank or box dont fit the destination 
                                     if ((src_obj.form === "pyramid" || src_obj.form === "plank" || src_obj.form === "box") &&
@@ -175,22 +184,48 @@ possible parse of the command. No need to change this one.
                             }
    
                     });
+                // Objects are “inside” boxes, but “ontop” of other objects.
                 else if (loc.relation === "ontop")
 
                     // Filter out source or destination objects that does not match the physics laws
                     hash.forEach(function(src){
                         let dstObs = hash.getValue(src);
                         let filter : boolean = true;
+                        let src_obj = state.objects[src];
                         for(let dst of dstObs)
                             for (let stack of state.stacks){
                                 let ystack = stack.indexOf(src);
                                 let xstack = stack.indexOf(dst);
+                                let dst_obj = state.objects[dst];
                                 filter = !((xstack > -1 && xstack+1 === ystack
                                     || dst === 'floor' && ystack === 0));
+                                 /*
+                                 (X) Balls cannot support anything.
+                                 (X) Small objects cannot support large objects.
+                                 (X) Small boxes cannot be supported by small bricks or pyramids.
+                                 (X) Large boxes cannot be supported by large pyramids.
+                                 (X) Balls must be in boxes or on the floor, otherwise they roll away.
+                                 */
+
+                                // Remove all cases where destination object is a ball
+                                if (dst_obj.form === "ball")
+                                    hash.setValue(src, dstObs = dstObs.filter(x => x !== dst));
+                                else {
+                                    filter = false;
+
+                                    if ((src_obj.size === "large" && dst_obj.size === "small") ||
+                                        (src_obj.form == "box" && (dst_obj.form === "brick" || dst_obj.form === "pyramid") && dst_obj.size === "small") ||
+                                        (src_obj.form === "box" && src_obj.size === "large" && dst_obj.form === "pyramid" && dst_obj.size === "large") ||
+                                        (src_obj.form === "ball" && dst_obj.form!== "box" && dst_obj.form !== "floor"))
+
+                                        hash.setValue(src, dstObs = dstObs.filter(x => x !== dst));
+                                }
                             }
                        
                         if (filter)
                             hash.remove(src);
+
+                         
                     });
 
             // Filter out all elements that does not match the source
