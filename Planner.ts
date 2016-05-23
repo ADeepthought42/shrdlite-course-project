@@ -59,243 +59,197 @@ module Planner {
     //////////////////////////////////////////////////////////////////////
     // private functions
 
-    /**
-     * The core planner function. The code here is just a template;
-     * you should rewrite this function entirely. In this template,
-     * the code produces a dummy plan which is not connected to the
-     * argument `interpretation`, but your version of the function
-     * should be such that the resulting plan depends on
-     * `interpretation`.
-     *
-     *
-     * @param interpretation The logical interpretation of the user's desired goal. The plan needs to be such that by executing it, the world is put into a state that satisfies this goal.
-     * @param state The current world state.
-     * @returns Basically, a plan is a
-     * stack of strings, which are either system utterances that
-     * explain what the robot is doing (e.g. "Moving left") or actual
-     * actions for the robot to perform, encoded as "l", "r", "p", or
-     * "d". The code shows how to build a plan. Each step of the plan can
-     * be added using the `push` method.
-     */
+     /**
+      * The core planner function. The code here is just a template;
+      * you should rewrite this function entirely. In this template,
+      * the code produces a dummy plan which is not connected to the
+      * argument `interpretation`, but your version of the function
+      * should be such that the resulting plan depends on
+      * `interpretation`.
+      *
+      *
+      * @param interpretation The logical interpretation of the user's desired goal. The plan needs to be such that by executing it, the world is put into a state that satisfies this goal.
+      * @param state The current world state.
+      * @returns Basically, a plan is a
+      * stack of strings, which are either system utterances that
+      * explain what the robot is doing (e.g. "Moving left") or actual
+      * actions for the robot to perform, encoded as "l", "r", "p", or
+      * "d". The code shows how to build a plan. Each step of the plan can
+      * be added using the `push` method.
+      */
 
-     //TODO Integration with A* search algorithm and the world
-        //TODO Define Graph & Node in our world
+      //TODO Integration with A* search algorithm and the world
+         //TODO Define Graph & Node in our world
+             //TODO Define Node
+                 // We call it Node for the simplicity
 
-    interface Position {
-        /**
-         * x represents a stack
-         * y represents the depth of an object in a stack,
-         * i.e. y=0 for the top object
-         */
-        x: number;
-        y: number;
-    }
+             //TODO class that implements interface Graph<Node>
+             class PlanGraph implements Graph<WorldState>{
+                 //TODO
+                 constructor(){};
 
-   /**
-    * TODO Define Node, Node is a symbolic representation that can
-    * be anything really. Can be almost identical to GridNode. Here
-    * it is called State, as in something we want to search for in
-    * a graph.
-    */
-    class State {
-        constructor(
-            public pos : Position
-        ) {}
+                 //TODO outgoingEdges(node : Node) : Edge<Node>[];
+                 outgoingEdges(state : WorldState) : Edge<WorldState>[] {
+                     let edges : Edge<WorldState>[] = [];
 
-        compareTo(other: State) : number {
-            return 0;
-        }
-    }
+                     if(state.arm > 0) {
+                         let e = new Edge<WorldState>();
+                         e.from = state;
+                         let s = state;
+                         s.arm--;
+                         e.to = s;
+                         e.cost = 1;
+                         edges.push(e);
+                     }
+                     if(state.arm < state.stacks.length) {
+                         let e = new Edge<WorldState>();
+                         e.from = state;
+                         let s = state;
+                         s.arm++;
+                         e.to = s;
+                         e.cost = 1;
+                         edges.push(e);
+                     }
+                     if (!state.holding) {
+                         let e = new Edge<WorldState>();
+                         e.from = state;
+                         let s = state;
+                         s.stacks[s.arm].push(s.holding);
+                         s.holding = "";
+                         e.to = s;
+                         e.cost = 1;
+                         edges.push(e);
+                     } else {
+                         let e = new Edge<WorldState>();
+                         e.from = state;
+                         let s = state;
+                         s.holding = s.stacks[s.arm].pop();
+                         e.to = s;
+                         e.cost = 1;
+                         edges.push(e);
+                     }
+                     return edges;
+                 }
 
-   /**
-    * TODO class that implements interface Graph<Node>
-    * The graph should consist of State, but take the current WorldState
-    * as an argument at creation. Intuitively we should look at the World
-    * as upside down when creating the graph. Each Stack in WorldState
-    * corresponds to the x:position and top object/state in any Stack
-    * should correspond to y=1:position, as we need to have one row for
-    * moving the arm.
-    */
-    class PlanGraph implements Graph<State>{
-        //TODO
-        constructor(public currentState : WorldState) {
-            //build graph
-        }
-
-        /**
-         * TODO outgoingEdges(node : Node) : Edge<Node>[];
-         * When creating edges we should consider edges as possible moves.
-         * This creates a very similar construct of the graph as in the
-         * GridGraph, i.e. 4 possible paths to create. An initial thought
-         * about how this is accomplished considers translating commands to
-         * edges directly. Left = edge left, Right = edge right, Pick = edge
-         * up, and Drop = edge down. This can be done at instantiation by,
-         * for example, creating "Walls" as in GridGraph for all x where an
-         * object can't be dropped.
-         */
-        outgoingEdges(state : State) : Edge<State>[] {
-            let edges : Edge<State>[] = [];
-
-            if(this.currentState.arm > 0) {
-                edges.push({from:state,
-                            to:state,
-                            cost:1});
-               // let e = new Edge<State>();
-               // e.from = state;
-               // let s = state;
-               // s.arm--;
-               // e.to = s;
-               // e.cost = 1;
-               // edges.push(e);
-            }
-            if(this.currentState.arm < this.currentState.stacks.length) {
-                let e = new Edge<State>();
-               // e.from = state;
-               // let s = state;
-               // s.arm++;
-               // e.to = s;
-               // e.cost = 1;
-               // edges.push(e);
-            }
-            if (!this.currentState.holding) {
-                let e = new Edge<State>();
-               // e.from = state;
-               // let s = state;
-               // s.stacks[s.arm].push(s.holding);
-               // s.holding = "";
-               // e.to = s;
-               // e.cost = 1;
-               // edges.push(e);
-            } else {
-                let e = new Edge<State>();
-               // e.from = state;
-               // let s = state;
-               // s.holding = s.stacks[s.arm].pop();
-               // e.to = s;
-               // e.cost = 1;
-               // edges.push(e);
-            }
-            return edges;
-        }
-
-        //TODO compareNodes : collections.ICompareFunction<Node>;
-        compareNodes(a : State, b : State) : number {
-                return a.compareTo(b);
-        };
-    }
+                 //TODO compareNodes : collections.ICompareFunction<Node>;
+                 compareNodes : collections.ICompareFunction<WorldState> =
+                     (a : WorldState, b : WorldState) : number => {
+                         return 0;
+                     };
+             }
 
 
-        //TODO Goal function (n:Node) => boolean
-            //TODO @Param ?
-                // interpretation : Interpreter.DNFFormula,
-                // state : WorldState
-        function goal(conjunctions : Interpreter.DNFFormula)
-            : (n : WorldState) => boolean
-        {
-            return (state : WorldState) => {
-                let con = conjunctions[0];
-                let b :boolean = true;
-                for(let lit of con)
-                    b = b && checkLit(lit,state);
-                return b;
-            };
-        }
+         //TODO Goal function (n:Node) => boolean
+             //TODO @Param ?
+                 // interpretation : Interpreter.DNFFormula,
+                 // state : WorldState
+         function goal(conjunctions : Interpreter.DNFFormula)
+             : (n : WorldState) => boolean
+         {
+             return (state : WorldState) => {
+                 let con = conjunctions[0];
+                 let b :boolean = true;
+                 for(let lit of con)
+                     b = b && checkLit(lit,state);
+                 return b;
+             };
+         }
 
-        function checkLit(lit : Interpreter.Literal,
-            state : WorldState): boolean
-        {
-            let rel = lit.relation;
-            let a : Pos = findPos(lit.args[0],state);
-            let b : Pos = findPos(lit.args[1],state);
+         function checkLit(lit : Interpreter.Literal,
+             state : WorldState): boolean
+         {
+             let rel = lit.relation;
+             let a : Pos = findPos(lit.args[0],state);
+             let b : Pos = findPos(lit.args[1],state);
 
-            return (rel === "holding" && state.holding === lit.args[0]) ||
-                (rel === "inside" && a.x === b.x && (a.y - 1) === b.y) ||
-                (rel === "above" && a.x === b.x && a.y > b.y) ||
-                (rel === "under" && a.x === b.x && a.y < b.y) ||
-                (rel === "leftof" && a.x < b.x) ||
-                (rel === "rightof" && a.x > b.x) ||
-                (rel === "beside" && Math.abs(a.x-b.x) === 1);
-        }
+             return (rel === "holding" && state.holding === lit.args[0]) ||
+                 (rel === "inside" && a.x === b.x && (a.y - 1) === b.y) ||
+                 (rel === "above" && a.x === b.x && a.y > b.y) ||
+                 (rel === "under" && a.x === b.x && a.y < b.y) ||
+                 (rel === "leftof" && a.x < b.x) ||
+                 (rel === "rightof" && a.x > b.x) ||
+                 (rel === "beside" && Math.abs(a.x-b.x) === 1);
+         }
 
-        interface Pos {
-            x : number;
-            y : number;
-        }
+         interface Pos {
+             x : number;
+             y : number;
+         }
 
-        function findPos(obj : string, st : WorldState) : Pos {
-            for(let i : number = 0; i < st.stacks.length ; i++){
-                for(let j : number = 0; j < st.stacks[i].length ; j++) {
-                    if (st.stacks[i][j] === obj) {
-                        return {x : i, y: j};
-                    }
-                }
-            }
-            return {x : -2, y: -2};
-        }
+         function findPos(obj : string, st : WorldState) : Pos {
+             for(let i : number = 0; i < st.stacks.length ; i++){
+                 for(let j : number = 0; j < st.stacks[i].length ; j++) {
+                     if (st.stacks[i][j] === obj) {
+                         return {x : i, y: j};
+                     }
+                 }
+             }
+             return {x : -2, y: -2};
+         }
 
-        //TODO Heuristic function (n:Node) => number
-            //TODO @Param ?
-                // interpretation : Interpreter.DNFFormula,
-                // state : WorldState
-        function heuristic() : (n:WorldState) => number {
-            return (n : WorldState) => {
-                return 0;
-            };
-        }
+         //TODO Heuristic function (n:Node) => number
+             //TODO @Param ?
+                 // interpretation : Interpreter.DNFFormula,
+                 // state : WorldState
+         function heuristic() : (n:WorldState) => number {
+             return (n : WorldState) => {
+                 return 0;
+             };
+         }
 
-        //TODO timeout set
-            //TODO @Param ?
-        function timeout() : number {
-            return 10;
-        }
+         //TODO timeout set
+             //TODO @Param ?
+         function timeout() : number {
+             return 10;
+         }
 
-    // A* result must be converted to string []
-    //TODO SearchResult<Node> to string []
-    function interpret(result : SearchResult<WorldState>) : string [] {
+     // A* result must be converted to string []
+     //TODO SearchResult<Node> to string []
+     function interpret(result : SearchResult<WorldState>) : string [] {
 
-        // Only need path?
-        let path : WorldState[]  = result.path;
+         // Only need path?
+         let path : WorldState[]  = result.path;
 
-        // The plan that we will return
-        let plan : string[] = [];
+         // The plan that we will return
+         let plan : string[] = [];
 
-        for (var i = 0; i < path.length - 1; i++) {
-            var cs : WorldState = path[i];
-            var ns : WorldState = path[i+1];
+         for (var i = 0; i < path.length - 1; i++) {
+             var cs : WorldState = path[i];
+             var ns : WorldState = path[i+1];
 
-            if(ns.arm < cs.arm)
-                plan.push("l");
-            else if(ns.arm > cs.arm)
-                plan.push("r");
-            else if(ns.holding && !cs.holding)
-                plan.push("p");
-            else if(!ns.holding && cs.holding)
-                plan.push("d");
-            else
-                throw "";
-        }
+             if(ns.arm < cs.arm)
+                 plan.push("l");
+             else if(ns.arm > cs.arm)
+                 plan.push("r");
+             else if(ns.holding && !cs.holding)
+                 plan.push("p");
+             else if(!ns.holding && cs.holding)
+                 plan.push("d");
+             else
+                 throw "";
+         }
 
-        return plan;
-    }
+         return plan;
+     }
 
-    function planInterpretation(
-        interpretation : Interpreter.DNFFormula,
-        state : WorldState) : string[]
-    {
+     function planInterpretation(
+         interpretation : Interpreter.DNFFormula,
+         state : WorldState) : string[]
+     {
 
-      let t = new PlanGraph();
-      let k = aStarSearch<WorldState>(
-          // TODO Assign parameters to those that needs it
-          t,
-          state,
-          goal(interpretation),
-          heuristic(),
-          timeout()
-      );
+       let t = new PlanGraph();
+       let k = aStarSearch<WorldState>(
+           // TODO Assign parameters to those that needs it
+           t,
+           state,
+           goal(interpretation),
+           heuristic(),
+           timeout()
+       );
 
-      if (k)
-        throw "planner " + collections.makeString(k.path);
+       if (k)
+         throw "planner " + collections.makeString(k.path);
 
-      return interpret(k);
-    }
-}
+       return interpret(k);
+     }
+ }
