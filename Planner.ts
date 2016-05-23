@@ -110,7 +110,7 @@ module Planner {
                          e.cost = 1;
                          edges.push(e);
                      }
-                     if (!state.holding) {
+                     if (!state.holding && state.stacks[state.arm].length > 0) {
                          let e = new Edge<WorldState>();
                          e.from = state;
                          let s = state;
@@ -119,7 +119,7 @@ module Planner {
                          e.to = s;
                          e.cost = 1;
                          edges.push(e);
-                     } else {
+                     } else if(state.holding) {
                          let e = new Edge<WorldState>();
                          e.from = state;
                          let s = state;
