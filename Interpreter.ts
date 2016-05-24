@@ -118,9 +118,9 @@ possible parse of the command. No need to change this one.
         let srcObjs : string[] = [];
         let dstObjs : string[] = [];
         let loc = cmd.location;
-        console.log(state.objects);
-        console.log(cmd);
-        
+        //console.log(state.objects);
+        //console.log(cmd);
+
         // Command handler
         if (cmd.command === "take") {
             srcObjs = findObjects(cmd.entity, state);
@@ -160,20 +160,20 @@ possible parse of the command. No need to change this one.
                                 let xstack = stack.indexOf(dst);
                                 let dst_obj = state.objects[dst];
 
-                                // Remove all cases where the target object is not a box 
+                                // Remove all cases where the target object is not a box
                                 //(cant put source objects in destination objects that are not boxes)
                                 if (dst_obj.form !== "box") {
                                     hash.setValue(src, dstObs = dstObs.filter(x => x !== dst));
                                 }else {
                                     filter = false;
 
-                                    // Remove all cases where the sizes of source pyramid, plank or box dont fit the destination 
+                                    // Remove all cases where the sizes of source pyramid, plank or box dont fit the destination
                                     if ((src_obj.form === "pyramid" || src_obj.form === "plank" || src_obj.form === "box") &&
-                                        src_obj.size === dst_obj.size || (src_obj.size === "large" && dst_obj.size === "small"))  
+                                        src_obj.size === dst_obj.size || (src_obj.size === "large" && dst_obj.size === "small"))
                                         hash.setValue(src, dstObs = dstObs.filter(x => x !== dst));
                                 }
                             }
-   
+
                     });
                 else if (loc.relation === "ontop")
 
@@ -188,14 +188,14 @@ possible parse of the command. No need to change this one.
                                 filter = !((xstack > -1 && xstack+1 === ystack
                                     || dst === 'floor' && ystack === 0));
                             }
-                       
+
                         if (filter)
                             hash.remove(src);
                     });
 
             // Filter out all elements that does not match the source
             hash.forEach(function(src)  {
-                let dstObs = hash.getValue(src); 
+                let dstObs = hash.getValue(src);
                 hash.setValue(src, dstObs = dstObs.filter(x => x !== src));
                 if (!dstObs.length)
                     hash.remove(src);
