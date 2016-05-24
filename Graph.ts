@@ -132,12 +132,12 @@ function aStarSearch<Node> (
         hRank:hRank,
         fRank:0+hRank
     });
+
     open.enqueue(start);
 
     // search for a goal until no more open nodes exist or time is up
     while(!open.isEmpty() && Date.now() < endTime) {
         var current : Node = open.dequeue();
-
         if (goal(current)) {
             // Reached goal, update SearchResult and return
             result.cost = visited.getGRank(current);
@@ -147,11 +147,11 @@ function aStarSearch<Node> (
             }
             return result;
         }
-
         // Iterate over all edges from current node
         for (var edge of graph.outgoingEdges(current)) {
             // calculate the cost of traveling the edge to next node
             var cost : number = visited.getGRank(current) + edge.cost;
+
             if (!visited.contains(edge.to)) {
                 // New node found, add it to visited with what we know
                 var hRank : number = heuristics(edge.to);

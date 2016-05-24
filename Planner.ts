@@ -97,6 +97,9 @@ module Planner {
               compareTo(other: State) : number {
                   return 0;
               }
+              toString() : string {
+                return collections.makeString(this);
+              }
             }
 
              //TODO class that implements interface Graph<Node>
@@ -107,10 +110,12 @@ module Planner {
                  //TODO outgoingEdges(node : Node) : Edge<Node>[];
                  outgoingEdges(state : State) : Edge<State>[] {
                      let edges : Edge<State>[] = [];
-
+                     console.log(state.arm);
+                     if (typeof state.stacks == "undefined")
+                      throw "asdasdasdasd"
                      if(state.arm > 0) {
                          let s = new State(state);
-                         s.arm --;
+                         s.arm--;
                          edges.push({from: state,
                                      to: s,
                                      cost: 1});
@@ -122,16 +127,19 @@ module Planner {
                                      to: s,
                                      cost: 1});
                      }
-                     if (!state.holding && state.stacks[state.arm].length > 0) {
+                     if (!state.holding && state.stacks[state.arm] != null) {
                          let s = new State(state);
+                        // console.log(s.stacks[s.arm].length);
                          s.holding = s.stacks[s.arm].pop();
                          edges.push({from: state,
                                      to: s,
                                      cost: 1});
                      } else if(state.holding) {
                          let s = new State(state);
+                         if (!s.stacks[s.arm])
+                          s.stacks[s.arm] = [];
                          s.stacks[s.arm].push(s.holding);
-                         s.holding = "";
+                         s.holding = null;
                          edges.push({from: state,
                                      to: s,
                                      cost: 1});
@@ -143,24 +151,6 @@ module Planner {
                          return a.compareTo(b);
                  };
              }
-
-
-         //TODO Goal function (n:Node) => boolean
-             //TODO @Param ?
-                 // interpretation : Interpreter.DNFFormula,
-                 // state : WorldState
-         function goal(conjunctions : Interpreter.DNFFormula)
-             : (n : State) => boolean
-         {
-             return (state : State) => {
-                 let con = conjunctions[0];
-                 let b :boolean = true;
-                 for(let lit of con)
-                     b = b && checkLit(lit,state);
-                 return b;
-                 //return false;
-             };
-         }
 
          function checkLit(lit : Interpreter.Literal,
              state : State): boolean
@@ -184,13 +174,11 @@ module Planner {
          }
 
          function findPos(obj : string, st : State) : Pos {
-             for(let i : number = 0; i < st.stacks.length ; i++){
-                 for(let j : number = 0; j < st.stacks[i].length ; j++) {
-                     if (st.stacks[i][j] === obj) {
+             for(let i : number = 0; i < st.stacks.length ; i++)
+                 for(let j : number = 0; j < st.stacks[i].length ; j++)
+                     if (st.stacks[i][j] === obj)
                          return {x : i, y: j};
-                     }
-                 }
-             }
+
              return {x : -2, y: -2};
          }
 
@@ -202,12 +190,6 @@ module Planner {
              return (n : State) => {
                  return 0;
              };
-         }
-
-         //TODO timeout set
-             //TODO @Param ?
-         function timeout() : number {
-             return 80;
          }
 
      // A* result must be converted to string []
@@ -232,10 +214,8 @@ module Planner {
                  plan.push("p");
              else if(!ns.holding && cs.holding)
                  plan.push("d");
-          //   else
-          //       throw "";
-         }
 
+         }
          return plan;
      }
 
@@ -243,33 +223,20 @@ module Planner {
          interpretation : Interpreter.DNFFormula,
          state : WorldState) : string[]
      {
-       var cloneObj = new State(state);
-       let t = new PlanGraph();
-       let k = aStarSearch<State>(
-           // TODO Assign parameters to those that needs it
-           t,
-           new State(cloneObj),
-           //goal(interpretation),
-           (state : State) => {
-               let con = interpretation[0];
-               console.log("NU KÖRS DEN");
-               let b :boolean = true;
-               for(let lit of con)
-                   b = b && checkLit(lit,state);
-               return b;
-           },
-           heuristic(),
-           60
-       );
-       let set = new collections.Set<State>();
-       let asd = new State(cloneObj);
-       let asdasd = t.outgoingEdges(asd);
-       let f = goal(interpretation);
-       set.add(asd);
-       for (let edc of asdasd)
-        set.add(edc.to);
-       console.log(set);
-
-       return interpret(k);
+       return interpret(
+              aStarSearch<State>(
+              // Graph
+               new PlanGraph(),
+               // State from WorldState
+               new State(state),
+               // Goal function
+               (state : State) => {
+                 return interpretation[0].every( lit => checkLit(lit, state) );
+               },
+               // Heuristsic function
+               heuristic(),
+               // Timeout in seconds
+               1
+           ));
      }
  }
