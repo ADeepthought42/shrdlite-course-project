@@ -118,8 +118,6 @@ possible parse of the command. No need to change this one.
         let srcObjs : string[] = [];
         let dstObjs : string[] = [];
         let loc = cmd.location;
-        //console.log(state.objects);
-        //console.log(cmd);
 
         // Command handler
         if (cmd.command === "take") {
@@ -153,7 +151,6 @@ possible parse of the command. No need to change this one.
                 if(loc.relation === "inside")
                     hash.forEach(function(src) {
                         let dstObs = hash.getValue(src);
-                        let filter : boolean = true;
                         let src_obj = state.objects[src];
                         for (let dst of dstObs)
                             for (let stack of state.stacks) {
@@ -167,7 +164,6 @@ possible parse of the command. No need to change this one.
                                 if (dst_obj.form !== "box") {
                                     hash.setValue(src, dstObs = dstObs.filter(x => x !== dst));
                                 }else {
-                                    filter = false;
 
                                     /*
                                     (X)Balls must be in boxes or on the floor, otherwise they roll away.
@@ -212,8 +208,6 @@ possible parse of the command. No need to change this one.
                                 else {
                                     filter = false;
 
-
-
                                     if ((src_obj.size === "large" && dst_obj.size === "small") ||
                                         (src_obj.form === "box" && (dst_obj.form === "brick" || dst_obj.form === "pyramid") && dst_obj.size === "small") ||
                                         (src_obj.form === "box" && src_obj.size === "large" && dst_obj.form === "pyramid" && dst_obj.size === "large") ||
@@ -225,8 +219,6 @@ possible parse of the command. No need to change this one.
 
                         if (filter)
                             hash.remove(src);
-
-
                     });
 
             // Filter out all elements that does not match the source
@@ -236,7 +228,7 @@ possible parse of the command. No need to change this one.
                 if (!dstObs.length)
                     hash.remove(src);
             });
-            console.log(hash.toString());
+
             if(hash.isEmpty())
                 throw "";
 
@@ -271,7 +263,6 @@ possible parse of the command. No need to change this one.
         objects = objects.filter(function(y : string) {
             if (!y) return false;
             let x : ObjectDefinition = state.objects[y];
-            //if (typeof x === 'undefined') throw y;
             return ((objForm === x.form || objForm === 'anyform' ) &&
                     (objColor === x.color || objColor === null) &&
                     (objSize === x.size || objSize === null))

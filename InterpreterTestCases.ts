@@ -75,6 +75,27 @@ module Interpreter {
        interpretations: [["inside(f,k)"], ["ontop(f,floor)"]]
       },
 
+      {world: "small",
+       utterance: "take the floor",
+       interpretations: []
+      },
+
+      {world: "small",
+       utterance: "put the floor in a box",
+       interpretations: []
+      },
+
+      {world: "small",
+       utterance: "put the white ball above the black ball",
+       interpretations: []
+      },
+
+
+      {world: "small",
+       utterance: "put the black ball above the white ball",
+       interpretations: []
+      },
+
 /*
 "put a plank in a box": you return
 "inside(c,k) | inside(c,l) | inside(d,k) | inside(d,l) | inside(d,m)",
