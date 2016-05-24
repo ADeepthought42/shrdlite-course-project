@@ -82,26 +82,21 @@ module Planner {
          //TODO Define Graph & Node in our world
              //TODO Define Node
                  // We call it Node for the simplicity
-            class State implements WorldState {
-              constructor(st : State){
+            class State {
+              constructor(st : State | WorldState){
                 this.stacks = st.stacks.map(x => x.slice());
                 this.holding = st.holding;
                 this.arm = st.arm;
-                this.objects = st.objects;
-                this.examples = st.examples;
               };
               stacks: Stack[];
               /** Which object the robot is currently holding. */
               holding: string;
               /** The column position of the robot arm. */
               arm: number;
-              /** A mapping from strings to `ObjectDefinition`s. The strings are meant to
-              be identifiers for the objects (see ExampleWorlds.ts for an example). */
-              objects: { [s:string]: ObjectDefinition; };
-              /** List of predefined example sentences/utterances that the user can choose
-              from in the UI. */
-              examples: string[];
 
+              compareTo(other: State) : number {
+                  return 0;
+              }
             }
 
              //TODO class that implements interface Graph<Node>
@@ -114,50 +109,39 @@ module Planner {
                      let edges : Edge<State>[] = [];
 
                      if(state.arm > 0) {
-                         let e = new Edge<State>();
-                         e.from = state;
                          let s = new State(state);
-                         s.arm--;
-                         e.to = s;
-                         e.cost = 1;
-                         edges.push(e);
+                         s.arm --;
+                         edges.push({from: state,
+                                     to: s,
+                                     cost: 1});
                      }
                      if(state.arm < state.stacks.length) {
-                         let e = new Edge<State>();
-                         e.from = state;
                          let s = new State(state);
                          s.arm++;
-                         e.to = s;
-                         e.cost = 1;
-                         edges.push(e);
+                         edges.push({from: state,
+                                     to: s,
+                                     cost: 1});
                      }
                      if (!state.holding && state.stacks[state.arm].length > 0) {
-                         let e = new Edge<State>();
-                         e.from = state;
                          let s = new State(state);
                          s.holding = s.stacks[s.arm].pop();
-                         e.to = s;
-                         e.cost = 1;
-                         edges.push(e);
+                         edges.push({from: state,
+                                     to: s,
+                                     cost: 1});
                      } else if(state.holding) {
-                         let e = new Edge<State>();
-                         e.from = state;
                          let s = new State(state);
                          s.stacks[s.arm].push(s.holding);
                          s.holding = "";
-                         e.to = s;
-                         e.cost = 1;
-                         edges.push(e);
+                         edges.push({from: state,
+                                     to: s,
+                                     cost: 1});
                      }
-
                      return edges;
                  }
 
-                 //TODO compareNodes : collections.ICompareFunction<Node>;
-                 compareNodes : collections.ICompareFunction<State> =
-                     (a : State, b : State) : number => {
-                         return 0;
-                     };
+                 compareNodes(a : State, b : State) : number {
+                         return a.compareTo(b);
+                 };
              }
 
 
@@ -174,6 +158,7 @@ module Planner {
                  for(let lit of con)
                      b = b && checkLit(lit,state);
                  return b;
+                 //return false;
              };
          }
 
@@ -222,7 +207,7 @@ module Planner {
          //TODO timeout set
              //TODO @Param ?
          function timeout() : number {
-             return 10;
+             return 80;
          }
 
      // A* result must be converted to string []
@@ -247,8 +232,8 @@ module Planner {
                  plan.push("p");
              else if(!ns.holding && cs.holding)
                  plan.push("d");
-             else
-                 throw "";
+          //   else
+          //       throw "";
          }
 
          return plan;
@@ -258,19 +243,33 @@ module Planner {
          interpretation : Interpreter.DNFFormula,
          state : WorldState) : string[]
      {
-       var cloneObj = new State(<State>state);
+       var cloneObj = new State(state);
        let t = new PlanGraph();
        let k = aStarSearch<State>(
            // TODO Assign parameters to those that needs it
            t,
            new State(cloneObj),
-           goal(interpretation),
+           //goal(interpretation),
+           (state : State) => {
+               let con = interpretation[0];
+               console.log("NU KÖRS DEN");
+               let b :boolean = true;
+               for(let lit of con)
+                   b = b && checkLit(lit,state);
+               return b;
+           },
            heuristic(),
-           timeout()
+           60
        );
-
+       let set = new collections.Set<State>();
+       let asd = new State(cloneObj);
+       let asdasd = t.outgoingEdges(asd);
        let f = goal(interpretation);
-       console.log(k);
+       set.add(asd);
+       for (let edc of asdasd)
+        set.add(edc.to);
+       console.log(set);
+
        return interpret(k);
      }
  }
