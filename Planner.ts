@@ -233,7 +233,7 @@ module Planner {
 
                      h += calculateH(dObj, n);
                  }
-
+                 console.log("HEURISTIC " + h);
                  return h;
              };
          }
