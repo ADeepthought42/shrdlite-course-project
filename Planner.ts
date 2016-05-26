@@ -120,7 +120,7 @@ module Planner {
                                      to: s,
                                      cost: 1});
                      }
-                     if(state.arm < state.stacks.length) {
+                     if(state.arm < state.stacks.length-1) {
                          let s = new State(state);
                          s.arm++;
                          edges.push({from: state,
@@ -182,6 +182,9 @@ module Planner {
               state.stacks[state.arm][0] === lit.args[0]);
             else
               onFloor = false;
+            if (a.x >= state.stacks.length || b.x >= state.stacks.length)
+              throw "a.x = "+a.x+", b.x = "+b.x;
+
              return onFloor ||
                  (rel === "holding" && state.holding === lit.args[0]) ||
                  (rel === "inside" && a.x === b.x && (a.y - 1) === b.y) ||
