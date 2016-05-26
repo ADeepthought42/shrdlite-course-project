@@ -188,8 +188,8 @@ module Planner {
                  (rel === "ontop" && a.x === b.x && (a.y - 1) === b.y) ||
                  (rel === "above" && a.x === b.x && a.y > b.y) ||
                  (rel === "under" && a.x === b.x && a.y < b.y) ||
-                 (rel === "leftof" && a.x < b.x) ||
-                 (rel === "rightof" && a.x > b.x) ||
+                 (rel === "leftof" && a.x < b.x && a.x > -1) ||
+                 (rel === "rightof" && a.x > b.x && b.x > -1 && a.x < state.stacks.length) ||
                  (rel === "beside" && Math.abs(a.x-b.x) === 1);
          }
 

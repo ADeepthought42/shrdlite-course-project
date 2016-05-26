@@ -101,6 +101,11 @@ module Interpreter {
        interpretations: [["ontop(k,g)"]]
       },
 
+      {world: "small",
+       utterance: "put the yellow box on the white ball",
+       interpretations: []
+      },
+
 /*
 "put a plank in a box": you return
 "inside(c,k) | inside(c,l) | inside(d,k) | inside(d,l) | inside(d,m)",

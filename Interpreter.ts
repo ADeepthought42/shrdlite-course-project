@@ -164,7 +164,6 @@ possible parse of the command. No need to change this one.
                             let dst_obj : ObjectDefinition = state.objects[dst];
 
                             //Objects are “inside” boxes, but “ontop” of other objects.
-                            console.log(dst);
                             if (dst !== "floor")
                               if(filterDst(loc.relation,src_obj,dst_obj))
                                    hash.setValue(src, dstObs = dstObs.filter(x => x !== dst));
@@ -293,10 +292,11 @@ possible parse of the command. No need to change this one.
             */
 
            // Remove all cases where destination object is a ball
-              (dst.form !== "ball" || (src.size === "large" && dst.size === "small") ||
+              (dst.form === "ball" || (src.size === "large" && dst.size === "small") ||
                (src.form === "box" && (dst.form === "brick" || dst.form === "pyramid") && dst.size === "small") ||
                (src.form === "box" && src.size === "large" && dst.form === "pyramid" && dst.size === "large") ||
                (src.form === "ball" && dst.form!== "box" && dst.form !== "floor"));
+
 
 //      || (relation === "above") &&
 
