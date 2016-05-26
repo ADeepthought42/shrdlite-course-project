@@ -155,60 +155,21 @@ possible parse of the command. No need to change this one.
                     // Remove all cases where dst are equal to src
                     hash.setValue(src, dstObs = dstObs.filter(x => x !== src));
 
-                    let src_obj = state.objects[src];
+                    let src_obj : ObjectDefinition = state.objects[src];
                     let filter : boolean  = false;
 
                     for (let dst of dstObs)
                         for (let stack of state.stacks) {
                             let [ystack,xstack] = [stack.indexOf(src), stack.indexOf(dst)];
-                            let dst_obj = state.objects[dst];
+                            let dst_obj : ObjectDefinition = state.objects[dst];
 
                             //Objects are “inside” boxes, but “ontop” of other objects.
-                            if(loc.relation === "inside") {
-                                // Remove all cases where the target object is not a box
-                                //(cant put source objects in destination objects that are not boxes)
-
-                                /*
-                                (X)Balls must be in boxes or on the floor, otherwise they roll away.
-                                (X)Small objects cannot support large objects.
-                                (X)Boxes cannot contain pyramids, planks or boxes of the same size.
-                                */
-                                // Remove all cases where the sizes of source pyramid, plank or box dont fit the destination
-                                if (dst_obj.form !== "box" || (src_obj.form === "pyramid" || src_obj.form === "plank" || src_obj.form === "box") &&
-                                    src_obj.size === dst_obj.size || (src_obj.size === "large" && dst_obj.size === "small"))
-                                    hash.setValue(src, dstObs = dstObs.filter(x => x !== dst));
-
-                            // Objects are “inside” boxes, but “ontop” of other objects.
-                            } else if (loc.relation === "ontop") {
-                                /*
-                                (X) Balls cannot support anything.
-                                (X) Small objects cannot support large objects.
-                                (X) Small boxes cannot be supported by small bricks or pyramids.
-                                (X) Large boxes cannot be supported by large pyramids.
-                                (X) Balls must be in boxes or on the floor, otherwise they roll away.
-                                */
-
-                               // Remove all cases where destination object is a ball
-                               if (dst_obj.form === "ball" || (src_obj.size === "large" && dst_obj.size === "small") ||
-                                   (src_obj.form === "box" && (dst_obj.form === "brick" || dst_obj.form === "pyramid") && dst_obj.size === "small") ||
-                                   (src_obj.form === "box" && src_obj.size === "large" && dst_obj.form === "pyramid" && dst_obj.size === "large") ||
-                                   (src_obj.form === "ball" && dst_obj.form!== "box" && dst_obj.form !== "floor"))
-
+                            console.log(dst);
+                            if (dst !== "floor")
+                              if(filterDst(loc.relation,src_obj,dst_obj))
                                    hash.setValue(src, dstObs = dstObs.filter(x => x !== dst));
 
-                          } else if (loc.relation === "above") {
-
-                          } else if (loc.relation === "under") {
-
-                          } else if (loc.relation === "besides") {
-
-                          } else if (loc.relation === "leftOf") {
-
-                          } else if (loc.relation === "rightOf") {
-
-                          }
-
-                          filter = filterFun(loc.relation,ystack, xstack, dst === 'floor');
+                            filter = filterFun(loc.relation,ystack, xstack, dst === 'floor');
 
                       }
 
@@ -218,7 +179,7 @@ possible parse of the command. No need to change this one.
                 });
 
             if(hash.isEmpty())
-                throw "";
+                throw "Hashtable in interpretCommand is empty";
 
             // Add literal to list of interpretations
             hash.forEach(src => {
@@ -295,9 +256,58 @@ possible parse of the command. No need to change this one.
         });
 
         if (!objects.length)
-            throw "";
+            throw "Fail in the findObjects function: Objects do not exist";
 
         return objects;
+    }
+
+    // if return false then the relation is okay!
+    export function filterDst (
+      relation : string,
+      src : ObjectDefinition,
+      dst : ObjectDefinition) : boolean
+    {
+        //Objects are “inside” boxes, but “ontop” of other objects.
+        return (relation === "inside") &&
+            // Remove all cases where the target object is not a box
+            //(cant put source objects in destination objects that are not boxes)
+
+            /*
+            (X)Balls must be in boxes or on the floor, otherwise they roll away.
+            (X)Small objects cannot support large objects.
+            (X)Boxes cannot contain pyramids, planks or boxes of the same size.
+            */
+            // Remove all cases where the sizes of source pyramid, plank or box dont fit the destination
+            (dst.form !== "box" || (src.form === "pyramid" || src.form === "plank" || src.form === "box") &&
+                src.size === dst.size || (src.size === "large" && dst.size === "small"))
+
+
+        // Objects are “inside” boxes, but “ontop” of other objects.
+        || (relation === "ontop") &&
+            /*
+            (X) Balls cannot support anything.
+            (X) Small objects cannot support large objects.
+            (X) Small boxes cannot be supported by small bricks or pyramids.
+            (X) Large boxes cannot be supported by large pyramids.
+            (X) Balls must be in boxes or on the floor, otherwise they roll away.
+            */
+
+           // Remove all cases where destination object is a ball
+              (dst.form !== "ball" || (src.size === "large" && dst.size === "small") ||
+               (src.form === "box" && (dst.form === "brick" || dst.form === "pyramid") && dst.size === "small") ||
+               (src.form === "box" && src.size === "large" && dst.form === "pyramid" && dst.size === "large") ||
+               (src.form === "ball" && dst.form!== "box" && dst.form !== "floor"));
+
+//      || (relation === "above") &&
+
+//      || (relation === "under") &&
+
+//      || (relation === "besides") &&
+
+//      || (relation === "leftOf") &&
+
+//      || (relation === "rightOf") &&
+
     }
 
     // Logic function that is used for filtering
