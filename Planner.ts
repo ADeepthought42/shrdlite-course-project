@@ -105,12 +105,12 @@ module Planner {
              //TODO class that implements interface Graph<Node>
              class PlanGraph implements Graph<State>{
                  //TODO
-                 constructor(){};
+                 objects: { [s:string]: ObjectDefinition; };
+                 constructor(state : WorldState){this.objects = state.objects;};
 
                  //TODO outgoingEdges(node : Node) : Edge<Node>[];
                  outgoingEdges(state : State) : Edge<State>[] {
                      let edges : Edge<State>[] = [];
-                     console.log(state.arm);
                      if (typeof state.stacks == "undefined")
                       throw "asdasdasdasd"
                      if(state.arm > 0) {
@@ -135,14 +135,29 @@ module Planner {
                                      to: s,
                                      cost: 1});
                      } else if(state.holding) {
-                         let s = new State(state);
-                         if (!s.stacks[s.arm])
-                          s.stacks[s.arm] = [];
-                         s.stacks[s.arm].push(s.holding);
-                         s.holding = null;
-                         edges.push({from: state,
+                        let s = new State(state);
+                        if (!s.stacks[s.arm]) //{
+                            s.stacks[s.arm] = [];
+                       let fun = Interpreter.filterDst;
+                       let dstStack = s.stacks[s.arm];
+                       let src = this.objects[state.holding];
+                       let dst = this.objects[dstStack[dstStack.length-1]];
+                      if (dstStack[dstStack.length-1] !== "floor" &&
+                        typeof dst !== "undefined" &&  typeof src !== "undefined") {
+                        if(!fun("ontop",src,dst) || !fun("inside",src,dst)) {
+                          s.stacks[s.arm].push(s.holding);
+                          s.holding = null;
+                          edges.push({from: state,
+                                       to: s,
+                                       cost: 1});
+                        }
+                     } else {
+                        s.stacks[s.arm].push(s.holding);
+                        s.holding = null;
+                        edges.push({from: state,
                                      to: s,
                                      cost: 1});
+                      }
                      }
                      return edges;
                  }
@@ -226,7 +241,7 @@ module Planner {
        return interpret(
               aStarSearch<State>(
               // Graph
-               new PlanGraph(),
+               new PlanGraph(state),
                // State from WorldState
                new State(state),
                // Goal function
@@ -236,7 +251,7 @@ module Planner {
                // Heuristsic function
                heuristic(),
                // Timeout in seconds
-               1
+               60
            ));
      }
  }
