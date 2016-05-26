@@ -201,10 +201,60 @@ module Planner {
              //TODO @Param ?
                  // interpretation : Interpreter.DNFFormula,
                  // state : WorldState
-         function heuristic() : (n:State) => number {
+         function heuristic(lits:Interpreter.Literal[]) : (n:State) => number {
              return (n : State) => {
-                 return 0;
+
+                 var h : number = 0;
+
+                 var sObj : Pos = null;
+                 var dObj : Pos = null;
+
+
+                 var lit : Interpreter.Literal = lits[0];
+
+                 sObj = findPos(lit.args[0], n);
+                 dObj = findPos(lit.args[0], n);
+
+                 if(lit.relation === "holding" || lit.relation === "above"){
+                    h = calculateH(sObj, n);
+
+                 } else if(lit.relation === "rightof" ||
+                           lit.relation === "leftof" ||
+                           lit.relation === "beside"){
+
+                     h = calculateH(sObj, n);
+                 } else if(lit.relation === "inside" ||
+                           lit.relation === "ontop" ||
+                           lit.relation === "under"){
+                     h = calculateH(sObj, n);
+
+                     h += calculateH(dObj, n);
+                 }
+
+                 return h;
              };
+         }
+
+         function calculateH(objPos : Pos, state : State) : number{
+
+             var penalty : number = 5;
+             var h : number = 0;
+             var diff : number = 0;
+             //var dist : number = 0;
+             // Distance from arm to source object
+             
+             //dist = Math.abs(state.arm - objPos.x);
+             //h = dist;
+
+             // How many objects are above the object in the stack?
+             diff = (state.stacks[objPos.x].length - 1) - objPos.y;
+             
+             // If there are objects above the object, add penalty
+             // for each object.
+             if(diff > 0)
+                 h += diff * penalty;
+
+             return h;
          }
 
      // A* result must be converted to string []
@@ -249,7 +299,7 @@ module Planner {
                  return interpretation[0].every( lit => checkLit(lit, state) );
                },
                // Heuristsic function
-               heuristic(),
+               heuristic(interpretation[0]),
                // Timeout in seconds
                60
            ));
