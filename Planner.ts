@@ -131,6 +131,8 @@ module Planner {
                          let s = new State(state);
                         // console.log(s.stacks[s.arm].length);
                          s.holding = s.stacks[s.arm].pop();
+                         if (typeof s.stacks[s.arm] === "undefined")
+                            s.stacks[s.arm] = [];
                          edges.push({from: state,
                                      to: s,
                                      cost: 1});
@@ -173,9 +175,17 @@ module Planner {
              let rel = lit.relation;
              let a : Pos = findPos(lit.args[0],state);
              let b : Pos = findPos(lit.args[1],state);
+             let onFloor :boolean;
 
-             return (rel === "holding" && state.holding === lit.args[0]) ||
+             if (typeof state.stacks[state.arm] !== "undefined")
+              onFloor = (lit.args[1] === "floor" &&
+              state.stacks[state.arm][0] === lit.args[0]);
+            else
+              onFloor = false;
+             return onFloor ||
+                 (rel === "holding" && state.holding === lit.args[0]) ||
                  (rel === "inside" && a.x === b.x && (a.y - 1) === b.y) ||
+                 (rel === "ontop" && a.x === b.x && (a.y - 1) === b.y) ||
                  (rel === "above" && a.x === b.x && a.y > b.y) ||
                  (rel === "under" && a.x === b.x && a.y < b.y) ||
                  (rel === "leftof" && a.x < b.x) ||
@@ -233,7 +243,7 @@ module Planner {
 
                      h += calculateH(dObj, n);
                  }
-                 console.log("HEURISTIC " + h);
+                // console.log("HEURISTIC " + h);
                  return h;
              };
          }
@@ -253,7 +263,7 @@ module Planner {
 
              if(state.stacks[objPos.x] != null)
                  diff = (state.stacks[objPos.x].length - 1) - objPos.y;
-             
+
              // If there are objects above the object, add penalty
              // for each object.
              if(diff > 0)
