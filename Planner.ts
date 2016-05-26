@@ -242,13 +242,13 @@ module Planner {
              var diff : number = 0;
              //var dist : number = 0;
              // Distance from arm to source object
-             
+
              //dist = Math.abs(state.arm - objPos.x);
              //h = dist;
 
              // How many objects are above the object in the stack?
              diff = (state.stacks[objPos.x].length - 1) - objPos.y;
-             
+
              // If there are objects above the object, add penalty
              // for each object.
              if(diff > 0)
