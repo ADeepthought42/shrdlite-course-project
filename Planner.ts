@@ -216,17 +216,20 @@ module Planner {
                  dObj = findPos(lit.args[0], n);
 
                  if(lit.relation === "holding" || lit.relation === "above"){
-                    h = calculateH(sObj, n);
+                    if(n.holding !== lit.args[0])
+                        h = calculateH(sObj, n);
 
                  } else if(lit.relation === "rightof" ||
                            lit.relation === "leftof" ||
                            lit.relation === "beside"){
 
-                     h = calculateH(sObj, n);
+                     if(n.holding !== lit.args[0])
+                         h = calculateH(sObj, n);
                  } else if(lit.relation === "inside" ||
                            lit.relation === "ontop" ||
                            lit.relation === "under"){
-                     h = calculateH(sObj, n);
+                     if(n.holding !== lit.args[0])
+                         h = calculateH(sObj, n);
 
                      h += calculateH(dObj, n);
                  }
@@ -247,7 +250,8 @@ module Planner {
              //h = dist;
 
              // How many objects are above the object in the stack?
-             diff = (state.stacks[objPos.x].length - 1) - objPos.y;
+             if(state.stacks[objPos.x] != null)
+                 diff = (state.stacks[objPos.x].length - 1) - objPos.y;
              
              // If there are objects above the object, add penalty
              // for each object.
