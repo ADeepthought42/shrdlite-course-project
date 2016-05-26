@@ -119,21 +119,23 @@ possible parse of the command. No need to change this one.
         let dstObjs : string[] = [];
         let loc = cmd.location;
 
+        console.log(cmd.entity);
+
         // Command handler
         if (cmd.command === "take") {
-            srcObjs = findObjects(cmd.entity, state);
+            srcObjs = findObjects(cmd.entity, state, true);
             for(let src of srcObjs)
               interpretation.push([{polarity: true,
                   relation: "holding", args: [src]}]);
 
         } else if (cmd.command === "put") {
-            dstObjs = findObjects(cmd.location.entity, state);
+            dstObjs = findObjects(cmd.location.entity, state, false);
             interpretation = [[{polarity: true, relation: loc.relation,
             args: [state.holding, dstObjs[0]]}]];
 
         } else if (cmd.command === "move") {
-            srcObjs = findObjects(cmd.entity, state);
-            dstObjs = findObjects(cmd.location.entity, state);
+            srcObjs = findObjects(cmd.entity, state, true);
+            dstObjs = findObjects(cmd.location.entity, state, false);
 
             // Need a Dictionary to differate the destination from sources
             let hash : collections.Dictionary<string,string[]> =
@@ -147,97 +149,83 @@ possible parse of the command. No need to change this one.
             let isSrcComplex = cmd.entity.object.location != null;
             let isDstComplex = cmd.location.entity.object.location != null;
             if (!isSrcComplex && !isDstComplex)
-                //Objects are “inside” boxes, but “ontop” of other objects.
-                if(loc.relation === "inside")
-                    hash.forEach(function(src) {
-                        let dstObs = hash.getValue(src);
-                        let src_obj = state.objects[src];
-                        for (let dst of dstObs)
-                            for (let stack of state.stacks) {
-                                let ystack = stack.indexOf(src);
-                                let xstack = stack.indexOf(dst);
-                                let dst_obj = state.objects[dst];
+                hash.forEach(src => {
+                    let dstObs = hash.getValue(src);
 
+                    // Remove all cases where dst are equal to src
+                    hash.setValue(src, dstObs = dstObs.filter(x => x !== src));
 
+                    let src_obj = state.objects[src];
+                    let filter : boolean  = false;
+
+                    for (let dst of dstObs)
+                        for (let stack of state.stacks) {
+                            let [ystack,xstack] = [stack.indexOf(src), stack.indexOf(dst)];
+                            let dst_obj = state.objects[dst];
+
+                            //Objects are “inside” boxes, but “ontop” of other objects.
+                            if(loc.relation === "inside") {
                                 // Remove all cases where the target object is not a box
                                 //(cant put source objects in destination objects that are not boxes)
-                                if (dst_obj.form !== "box") {
+
+                                /*
+                                (X)Balls must be in boxes or on the floor, otherwise they roll away.
+                                (X)Small objects cannot support large objects.
+                                (X)Boxes cannot contain pyramids, planks or boxes of the same size.
+                                */
+                                // Remove all cases where the sizes of source pyramid, plank or box dont fit the destination
+                                if (dst_obj.form !== "box" || (src_obj.form === "pyramid" || src_obj.form === "plank" || src_obj.form === "box") &&
+                                    src_obj.size === dst_obj.size || (src_obj.size === "large" && dst_obj.size === "small"))
                                     hash.setValue(src, dstObs = dstObs.filter(x => x !== dst));
-                                }else {
 
-                                    /*
-                                    (X)Balls must be in boxes or on the floor, otherwise they roll away.
-                                    (X)Small objects cannot support large objects.
-                                    (X)Boxes cannot contain pyramids, planks or boxes of the same size.
-                                    */
+                            // Objects are “inside” boxes, but “ontop” of other objects.
+                            } else if (loc.relation === "ontop") {
+                                /*
+                                (X) Balls cannot support anything.
+                                (X) Small objects cannot support large objects.
+                                (X) Small boxes cannot be supported by small bricks or pyramids.
+                                (X) Large boxes cannot be supported by large pyramids.
+                                (X) Balls must be in boxes or on the floor, otherwise they roll away.
+                                */
 
-                                    // Remove all cases where the sizes of source pyramid, plank or box dont fit the destination
-                                    if ((src_obj.form === "pyramid" || src_obj.form === "plank" || src_obj.form === "box") &&
-                                        src_obj.size === dst_obj.size || (src_obj.size === "large" && dst_obj.size === "small"))
-                                        hash.setValue(src, dstObs = dstObs.filter(x => x !== dst));
-                                }
-                            }
+                               // Remove all cases where destination object is a ball
+                               if (dst_obj.form === "ball" || (src_obj.size === "large" && dst_obj.size === "small") ||
+                                   (src_obj.form === "box" && (dst_obj.form === "brick" || dst_obj.form === "pyramid") && dst_obj.size === "small") ||
+                                   (src_obj.form === "box" && src_obj.size === "large" && dst_obj.form === "pyramid" && dst_obj.size === "large") ||
+                                   (src_obj.form === "ball" && dst_obj.form!== "box" && dst_obj.form !== "floor"))
 
-                    });
-                // Objects are “inside” boxes, but “ontop” of other objects.
-                else if (loc.relation === "ontop")
+                                   hash.setValue(src, dstObs = dstObs.filter(x => x !== dst));
 
-                    // Filter out source or destination objects that does not match the physics laws
-                    hash.forEach(function(src){
-                        let dstObs = hash.getValue(src);
-                        let filter : boolean = true;
-                        let src_obj = state.objects[src];
-                        for(let dst of dstObs)
-                            for (let stack of state.stacks){
-                                let ystack = stack.indexOf(src);
-                                let xstack = stack.indexOf(dst);
-                                let dst_obj = state.objects[dst];
-                                filter = !((xstack > -1 && xstack+1 === ystack
-                                    || dst === 'floor' && ystack === 0));
-                                 /*
-                                 (X) Balls cannot support anything.
-                                 (X) Small objects cannot support large objects.
-                                 (X) Small boxes cannot be supported by small bricks or pyramids.
-                                 (X) Large boxes cannot be supported by large pyramids.
-                                 (X) Balls must be in boxes or on the floor, otherwise they roll away.
-                                 */
+                          } else if (loc.relation === "above") {
 
-                                // Remove all cases where destination object is a ball
-                                if (dst_obj.form === "ball")
-                                    hash.setValue(src, dstObs = dstObs.filter(x => x !== dst));
-                                else {
-                                    filter = false;
+                          } else if (loc.relation === "under") {
 
-                                    if ((src_obj.size === "large" && dst_obj.size === "small") ||
-                                        (src_obj.form === "box" && (dst_obj.form === "brick" || dst_obj.form === "pyramid") && dst_obj.size === "small") ||
-                                        (src_obj.form === "box" && src_obj.size === "large" && dst_obj.form === "pyramid" && dst_obj.size === "large") ||
-                                        (src_obj.form === "ball" && dst_obj.form!== "box" && dst_obj.form !== "floor"))
+                          } else if (loc.relation === "besides") {
 
-                                        hash.setValue(src, dstObs = dstObs.filter(x => x !== dst));
-                                }
-                            }
+                          } else if (loc.relation === "leftOf") {
 
-                        if (filter)
-                            hash.remove(src);
-                    });
+                          } else if (loc.relation === "rightOf") {
 
-            // Filter out all elements that does not match the source
-            hash.forEach(function(src)  {
-                let dstObs = hash.getValue(src);
-                hash.setValue(src, dstObs = dstObs.filter(x => x !== src));
-                if (!dstObs.length)
-                    hash.remove(src);
-            });
+                          }
+
+                          filter = filterFun(loc.relation,ystack, xstack, dst === 'floor');
+
+                      }
+
+                      // Filter out all elements that does match the source
+                      if (filter || !dstObs.length)
+                        hash.remove(src);
+                });
 
             if(hash.isEmpty())
                 throw "";
 
             // Add literal to list of interpretations
-            hash.forEach(function(src) {
-                for(let dst of hash.getValue(src))
-                    if(src !== dst)
-                        interpretation.push([{polarity: true, relation: loc.relation,
-                            args: [src, dst]}]);
+            hash.forEach(src => {
+                hash.getValue(src).forEach(dst => {
+                    interpretation.push([{polarity: true, relation: loc.relation,
+                        args: [src, dst]}]);
+                });
             });
 
         }
@@ -246,14 +234,16 @@ possible parse of the command. No need to change this one.
 
     // Goes through the list of objects and returns the ones matching the arguments.
     //If there is no match it returns an empty string.
-    function findObjects(entity : Parser.Entity, state : WorldState) : string[] {
+    function findObjects(
+      entity : Parser.Entity,
+      state : WorldState,
+      isSrc : boolean
+    ) : string[] {
         let obj : Parser.Object = entity.object;
         let isComplex = obj.location != null;
         let asd = isComplex ? obj.object : obj;
-        let objForm = asd.form;
-        let objColor = asd.color;
-        let objSize = asd.size;
-
+        // Get Definition
+        let [objForm, objColor, objSize] = [asd.form, asd.color, asd.size];
         let objects : string[] = Array.prototype.concat.apply([], state.stacks);
 
         if(state.holding)
@@ -261,67 +251,74 @@ possible parse of the command. No need to change this one.
 
         // Filter out all the objects that do not match the given descriptons
         objects = objects.filter(function(y : string) {
-            if (!y) return false;
             let x : ObjectDefinition = state.objects[y];
             return ((objForm === x.form || objForm === 'anyform' ) &&
                     (objColor === x.color || objColor === null) &&
                     (objSize === x.size || objSize === null))
         });
 
-        if(objForm === 'floor')
+        // Only dst can push floor
+        if(!isComplex && objForm === 'floor' && !isSrc)
             objects.push('floor');
 
+        // We return objects if not complex and not empty
         if(!isComplex)
             if (!objects.length)
                 throw "Objects empty";
             else
                 return objects;
 
+        // Now we know that it is complex then extract information
         let loc           = obj.location;
         let loc_entity    = loc.entity;
         let loc_relation  = loc.relation;
-        let loc_objects   = findObjects(loc_entity,state);
+        let loc_objects   = findObjects(loc_entity,state,false);
         let loc_quantifier = loc_entity.quantifier;
 
         // Quantifier handler
         if(loc_quantifier === "any") {
           // any of these loc_objects?
-        } else if(loc_quantifier === "the" && loc_objects.length !== 1)
-            throw "The Quantifier \"the\" can only refer to a specific object"
-
-        // Relation handler
-        if(loc_relation === "inside") {
-
-            //filter out those objects that ain't in the stack of a object
-            objects = objects.filter( function (y) {
-                for (let x of loc_objects)
-                    for (let stack of state.stacks){
-                        let ystack = stack.indexOf(y);
-                        let xstack = stack.indexOf(x);
-                        if (xstack > -1 && ystack > xstack)
-                            return true;
-                    }
-                return false;
-            });
-        } else if (loc_relation === "ontop") {
-
-            // filter out those that ain't ontop of the specified object
-            objects = objects.filter( function (y) {
-                for (let x of loc_objects)
-                    for (let stack of state.stacks){
-                        let ystack = stack.indexOf(y);
-                        let xstack = stack.indexOf(x);
-
-                        // loc_object in stack and object is ontop
-                        if ((xstack > -1 && xstack+1 === ystack) ||
-                            (x === 'floor' && ystack === 0))
-                            return true;
-                    }
-                return false;
-            });
+        } else if(loc_quantifier === "the" && loc_objects.length !== 1) {
+            throw "The Quantifier \"the\" can only refer to a specific object";
+        } else if(loc_quantifier === "all" ) {
+          // Can this even happen in a complex object?
         }
+
+        // Filter out those objects that ain't in the stack of a object
+        objects = objects.filter( y => {
+            return loc_objects.some( x => {
+                return state.stacks.some( stack => {
+                    return filterFun(loc_relation,stack.indexOf(y),
+                      stack.indexOf(x), x === 'floor');
+                });
+            });
+        });
+
         if (!objects.length)
             throw "";
+
         return objects;
+    }
+
+    // Logic function that is used for filtering
+    function filterFun (
+      relation : string,
+      ystack : number,
+      xstack :number,
+      floor : boolean) : boolean
+    {
+      return (
+          //
+          (relation === "inside" && xstack > -1 && ystack > xstack) ||
+          // relation in stack and object is ontop
+          (relation === "ontop" && (
+            xstack > -1 && xstack+1 === ystack || floor && ystack === 0)
+          ) ||
+          (relation === "above") ||
+          (relation === "under") ||
+          (relation === "beside") ||
+          (relation === "leftOf") ||
+          (relation === "rightOf")
+        );
     }
 }
