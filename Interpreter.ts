@@ -119,11 +119,11 @@ possible parse of the command. No need to change this one.
         let dstObjs : string[] = [];
         let loc = cmd.location;
 
-        console.log(cmd.entity);
-
         // Command handler
         if (cmd.command === "take") {
+
             srcObjs = findObjects(cmd.entity, state, true);
+
             for(let src of srcObjs)
               interpretation.push([{polarity: true,
                   relation: "holding", args: [src]}]);
@@ -148,29 +148,27 @@ possible parse of the command. No need to change this one.
             // Complex datatype?
             let isSrcComplex = cmd.entity.object.location != null;
             let isDstComplex = cmd.location.entity.object.location != null;
+
             if (!isSrcComplex && !isDstComplex)
                 hash.forEach(src => {
                     let dstObs = hash.getValue(src);
 
                     // Remove all cases where dst are equal to src
                     hash.setValue(src, dstObs = dstObs.filter(x => x !== src));
-
+                    let srcPos = findPos(src,state.stacks);
                     let src_obj : ObjectDefinition = state.objects[src];
-                    let filter : boolean  = false;
+                    let filter : boolean  = true;
 
-                    for (let dst of dstObs)
-                        for (let stack of state.stacks) {
-                            let [ystack,xstack] = [stack.indexOf(src), stack.indexOf(dst)];
-                            let dst_obj : ObjectDefinition = state.objects[dst];
+                    for (let dst of dstObs){
+                        let dstPos = findPos(dst,state.stacks);
+                        let dst_obj : ObjectDefinition = state.objects[dst];
 
-                            //Objects are “inside” boxes, but “ontop” of other objects.
-                            if (dst !== "floor")
-                              if(filterDst(loc.relation,src_obj,dst_obj))
-                                   hash.setValue(src, dstObs = dstObs.filter(x => x !== dst));
+                        if (dst !== "floor" && filterDst(loc.relation,src_obj,dst_obj))
+                            hash.setValue(src, dstObs = dstObs.filter(x => x !== dst));
 
-                            filter = filterFun(loc.relation,ystack, xstack, dst === 'floor');
+                        filter = filter && filterFun(loc.relation,srcPos, dstPos, dst === 'floor');
 
-                      }
+                    }
 
                       // Filter out all elements that does match the source
                       if (filter || !dstObs.length)
@@ -198,10 +196,12 @@ possible parse of the command. No need to change this one.
       entity : Parser.Entity,
       state : WorldState,
       isSrc : boolean
-    ) : string[] {
+    ) : string[]
+    {
         let obj : Parser.Object = entity.object;
         let isComplex = obj.location != null;
         let asd = isComplex ? obj.object : obj;
+
         // Get Definition
         let [objForm, objColor, objSize] = [asd.form, asd.color, asd.size];
         let objects : string[] = Array.prototype.concat.apply([], state.stacks);
@@ -245,12 +245,10 @@ possible parse of the command. No need to change this one.
         }
 
         // Filter out those objects that ain't in the stack of a object
-        objects = objects.filter( y => {
-            return loc_objects.some( x => {
-                return state.stacks.some( stack => {
-                    return filterFun(loc_relation,stack.indexOf(y),
-                      stack.indexOf(x), x === 'floor');
-                });
+        objects = objects.filter( src => {
+            return loc_objects.some( dst => {
+                return filterFun(loc_relation,findPos(src,state.stacks),
+                  findPos(dst,state.stacks), dst === 'floor');
             });
         });
 
@@ -266,69 +264,63 @@ possible parse of the command. No need to change this one.
       src : ObjectDefinition,
       dst : ObjectDefinition) : boolean
     {
-        //Objects are “inside” boxes, but “ontop” of other objects.
-        return (relation === "inside") &&
-            // Remove all cases where the target object is not a box
-            //(cant put source objects in destination objects that are not boxes)
+        // Small objects cannot support large objects.
+        let toSmall = src.size === "large" && dst.size === "small";
 
-            /*
-            (X)Balls must be in boxes or on the floor, otherwise they roll away.
-            (X)Small objects cannot support large objects.
-            (X)Boxes cannot contain pyramids, planks or boxes of the same size.
-            */
-            // Remove all cases where the sizes of source pyramid, plank or box dont fit the destination
-            (dst.form !== "box" || (src.form === "pyramid" || src.form === "plank" || src.form === "box") &&
-                src.size === dst.size || (src.size === "large" && dst.size === "small"))
+        // Boxes cannot contain pyramids, planks or boxes of the same size.
+        let boxCon = dst.form === "box" &&
+            (src.form === "pyramid" || src.form === "plank" || src.form === "box") &&
+            src.size === dst.size;
 
+        // Balls cannot support anything.
+        let ballCon = dst.form === "ball";
 
-        // Objects are “inside” boxes, but “ontop” of other objects.
-        || (relation === "ontop") &&
-            /*
-            (X) Balls cannot support anything.
-            (X) Small objects cannot support large objects.
-            (X) Small boxes cannot be supported by small bricks or pyramids.
-            (X) Large boxes cannot be supported by large pyramids.
-            (X) Balls must be in boxes or on the floor, otherwise they roll away.
-            */
+        // Small boxes cannot be supported by small bricks or pyramids.
+        let brickPyrCon = src.form === "box" &&
+            (dst.form === "brick" || dst.form === "pyramid") &&
+            dst.size === "small"
 
-           // Remove all cases where destination object is a ball
-              (dst.form === "ball" || (src.size === "large" && dst.size === "small") ||
-               (src.form === "box" && (dst.form === "brick" || dst.form === "pyramid") && dst.size === "small") ||
-               (src.form === "box" && src.size === "large" && dst.form === "pyramid" && dst.size === "large") ||
-               (src.form === "ball" && dst.form!== "box" && dst.form !== "floor"));
+        // Large boxes cannot be supported by large pyramids.
+        let largeBoxPyrCon = src.form === "box" && src.size === "large" && dst.form === "pyramid" && dst.size === "large"
 
+        // Balls must be in boxes or on the floor, otherwise they roll away.
+        let ballBoxCon = src.form === "ball" && !(dst.form === "box" || dst.form === "floor")
 
-//      || (relation === "above") &&
-
-//      || (relation === "under") &&
-
-//      || (relation === "besides") &&
-
-//      || (relation === "leftOf") &&
-
-//      || (relation === "rightOf") &&
+        return relation === "inside" && (boxCon || toSmall) ||
+            relation === "ontop" && (ballCon || toSmall || brickPyrCon || largeBoxPyrCon || ballBoxCon) ||
+            relation === "above" && (ballCon || toSmall || brickPyrCon || largeBoxPyrCon)
 
     }
 
     // Logic function that is used for filtering
     function filterFun (
       relation : string,
-      ystack : number,
-      xstack :number,
+      src : Pos,
+      dst : Pos,
       floor : boolean) : boolean
     {
       return (
-          //
-          (relation === "inside" && xstack > -1 && ystack > xstack) ||
-          // relation in stack and object is ontop
-          (relation === "ontop" && (
-            xstack > -1 && xstack+1 === ystack || floor && ystack === 0)
-          ) ||
-          (relation === "above") ||
-          (relation === "under") ||
-          (relation === "beside") ||
-          (relation === "leftOf") ||
-          (relation === "rightOf")
-        );
+          relation === "inside" && src.x === dst.x && (src.y - 1 === dst.y || (floor && src.y === 0)) ||
+          relation === "ontop"  && src.x === dst.x && (src.y - 1 === dst.y || (floor && src.y === 0)) ||
+          relation === "above"  && src.x === dst.x && src.y > dst.y ||
+          relation === "under"  && src.x === dst.x && src.y < dst.y) ||
+          relation === "beside" && Math.abs(src.x-dst.x) === 1;
     }
+
+    export interface Pos {
+        x : number;
+        y : number;
+    }
+
+    export function findPos(obj : string, st : Stack[] ) : Pos {
+        for(let i : number = 0; i < st.length ; i++)
+            for(let j : number = 0; j < st[i].length ; j++)
+                if (st[i][j] === obj)
+                    return {x : i, y: j};
+
+        return {x : -100, y: -100};
+    }
+
+
+
 }

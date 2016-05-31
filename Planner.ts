@@ -173,8 +173,8 @@ module Planner {
              state : State): boolean
          {
              let rel = lit.relation;
-             let a : Pos = findPos(lit.args[0],state);
-             let b : Pos = findPos(lit.args[1],state);
+             let a : Interpreter.Pos = Interpreter.findPos(lit.args[0],state.stacks);
+             let b : Interpreter.Pos = Interpreter.findPos(lit.args[1],state.stacks);
              let onFloor :boolean;
 
              if (typeof state.stacks[state.arm] !== "undefined")
@@ -195,7 +195,7 @@ module Planner {
                  (rel === "rightof" && a.x > b.x && b.x > -1 && a.x < state.stacks.length) ||
                  (rel === "beside" && Math.abs(a.x-b.x) === 1);
          }
-
+/*
          interface Pos {
              x : number;
              y : number;
@@ -209,7 +209,7 @@ module Planner {
 
              return {x : -2, y: -2};
          }
-
+*/
          //TODO Heuristic function (n:Node) => number
              //TODO @Param ?
                  // interpretation : Interpreter.DNFFormula,
@@ -219,14 +219,14 @@ module Planner {
 
                  var h : number = 0;
 
-                 var sObj : Pos = null;
-                 var dObj : Pos = null;
+                 var sObj : Interpreter.Pos = null;
+                 var dObj : Interpreter.Pos = null;
 
 
                  var lit : Interpreter.Literal = lits[0];
 
-                 sObj = findPos(lit.args[0], n);
-                 dObj = findPos(lit.args[0], n);
+                 sObj = Interpreter.findPos(lit.args[0], n.stacks);
+                 dObj = Interpreter.findPos(lit.args[0], n.stacks);
 
                  if(lit.relation === "holding" || lit.relation === "above"){
                     if(n.holding !== lit.args[0])
@@ -251,7 +251,7 @@ module Planner {
              };
          }
 
-         function calculateH(objPos : Pos, state : State) : number{
+         function calculateH(objPos : Interpreter.Pos, state : State) : number{
 
              var penalty : number = 5;
              var h : number = 0;
