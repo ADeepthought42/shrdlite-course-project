@@ -281,7 +281,8 @@ possible parse of the command. No need to change this one.
             dst.size === "small"
 
         // Large boxes cannot be supported by large pyramids.
-        let largeBoxPyrCon = src.form === "box" && src.size === "large" && dst.form === "pyramid" && dst.size === "large"
+        let largeBoxPyrCon = src.form === "box" && src.size === "large" &&
+            dst.form === "pyramid" && dst.size === "large"
 
         // Balls must be in boxes or on the floor, otherwise they roll away.
         let ballBoxCon = src.form === "ball" && !(dst.form === "box" || dst.form === "floor")
@@ -300,8 +301,8 @@ possible parse of the command. No need to change this one.
       floor : boolean) : boolean
     {
       return (
-          relation === "inside" && src.x === dst.x && (src.y - 1 === dst.y || (floor && src.y === 0)) ||
-          relation === "ontop"  && src.x === dst.x && (src.y - 1 === dst.y || (floor && src.y === 0)) ||
+          relation === "inside" && (src.x === dst.x && src.y - 1 === dst.y || (floor && src.y === 0)) ||
+          relation === "ontop"  && (src.x === dst.x && src.y - 1 === dst.y || (floor && src.y === 0)) ||
           relation === "above"  && src.x === dst.x && src.y > dst.y ||
           relation === "under"  && src.x === dst.x && src.y < dst.y) ||
           relation === "beside" && Math.abs(src.x-dst.x) === 1;
