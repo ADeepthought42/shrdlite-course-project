@@ -117,8 +117,7 @@ module Planner {
 
         outgoingEdges(state : State) : Edge<State>[] {
             let edges : Edge<State>[] = [];
-            if (typeof state.stacks == "undefined")
-                throw "asdasdasdasd"
+
             if(state.arm > 0) {
                 let s = new State(state);
                 s.arm--;
@@ -146,7 +145,7 @@ module Planner {
                 if (dstStack[dstStack.length-1] !== "floor" &&
                     typeof dst !== "undefined" &&  typeof src !== "undefined")
                 {
-                    if(!fun("ontop",src,dst) || !fun("inside",src,dst)) {
+                    if(!fun("ontop",src,dst) && !fun("inside",src,dst)) {
                         s.stacks[s.arm].push(s.holding);
                         s.holding = null;
                         edges.push({from: state, to: s, cost: 1});
@@ -175,8 +174,8 @@ module Planner {
      state : State): boolean
     {
         let rel = lit.relation;
-        let a : Interpreter.Pos = Interpreter.findPos(lit.args[0],state.stacks);
-        let b : Interpreter.Pos = Interpreter.findPos(lit.args[1],state.stacks);
+        let src : Interpreter.Pos = Interpreter.findPos(lit.args[0],state.stacks);
+        let dst : Interpreter.Pos = Interpreter.findPos(lit.args[1],state.stacks);
         let onFloor :boolean;
 
         if (typeof state.stacks[state.arm] !== "undefined")
@@ -184,18 +183,16 @@ module Planner {
             state.stacks[state.arm][0] === lit.args[0]);
         else
             onFloor = false;
-            if (a.x >= state.stacks.length || b.x >= state.stacks.length)
-                throw "a.x = "+a.x+", b.x = "+b.x;
 
         return onFloor ||
-        (rel === "holding" && state.holding === lit.args[0]) ||
-        (rel === "inside" && a.x === b.x && (a.y - 1) === b.y) ||
-        (rel === "ontop" && a.x === b.x && (a.y - 1) === b.y) ||
-        (rel === "above" && a.x === b.x && a.y > b.y) ||
-        (rel === "under" && a.x === b.x && a.y < b.y) ||
-        (rel === "leftof" && a.x < b.x && a.x > -1) ||
-        (rel === "rightof" && a.x > b.x && b.x > -1 && a.x < state.stacks.length) ||
-        (rel === "beside" && Math.abs(a.x-b.x) === 1);
+        (rel === "holding" && state.holding === lit.args[0]) || !state.holding && (
+        (rel === "inside" && src.x === dst.x && (src.y - 1) === dst.y) ||
+        (rel === "ontop" && src.x === dst.x && (src.y - 1) === dst.y) ||
+        (rel === "above" && src.x === dst.x && src.y > dst.y) ||
+        (rel === "under" && src.x === dst.x && src.y < dst.y) ||
+        (rel === "leftof" && src.x < dst.x && src.x > -1) ||
+        (rel === "rightof" && src.x > dst.x && dst.x > -1 && src.x < state.stacks.length) ||
+        (rel === "beside" && Math.abs(src.x-dst.x) === 1));
     }
 
     //TODO Heuristic function (n:Node) => number
@@ -301,15 +298,64 @@ module Planner {
                 // State from WorldState
                 new State(state),
                 // Goal function
-                (state : State) => {
-                return interpretation[0].every( lit => checkLit(lit, state) );
+                (st : State) => {
+                return interpretation[0].every( lit => checkLit(lit, st) );
                 },
                 // Heuristsic function
                 heuristic(interpretation[0]),
                 // Timeout in seconds
-                2
+                10
             );
 
         return interpret(algorithmResult);
     }
- }
+
+    /* Manhattan distance */
+    function manhattan(lit : Interpreter.Literal, state : State) : number {
+
+        // If we are at goal return 0
+        if (checkLit(lit, state))
+            return 0;
+
+        // Result we want to return
+        let result :number = 0;
+
+        // penalty used for heights
+        var penalty : number = 5;
+
+        // Get the objects id's
+        let [src,dst] = lit.args;
+
+        /*
+            If object exist and is not floor then we find the position of object
+            otherwise we get a good position on the floor.
+        */
+        let funPos = (obj : string) => (obj && obj !== "floor") ? Interpreter.findPos(obj, state.stacks) : findBestFloorPos();
+
+        // Find position for src
+        let srcPos = funPos(src);
+
+        let dstPos = funPos(dst);
+
+        let diffX = Math.abs(srcPos.x - dstPos.x);
+
+        //let diffY =
+
+        return result;
+
+        /* ------------- private functions ------------- */
+
+        function findBestFloorPos() : Interpreter.Pos {
+            let [_,pos] = state.stacks.reduce(
+                function(returnState, stack, x) {
+                    let [previousValue,bestPos] = returnState;
+                    let heightCost = penalty * stack.length;
+                    let distanceFromArm = Math.abs(state.arm - x);
+                    let currentCost = distanceFromArm + heightCost;
+                    return (currentCost < previousValue) ? [currentCost, x] : returnState;
+            }, [Number.MAX_VALUE,Number.MIN_VALUE]);
+            return {x : pos, y : 0};
+        }
+    }
+
+}
