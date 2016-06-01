@@ -291,18 +291,26 @@ module Planner {
         interpretation : Interpreter.DNFFormula,
         state : WorldState) : string[]
     {
+        let start = new State(state);
+
+        // Select the interpretation with smallest start heuristic
+        let hList = interpretation.map(y => Math.min( ...y.map(x => manhattan(x,start))));
+        let best = interpretation[hList.indexOf(Math.min.apply(Math,hList))];
+
         let algorithmResult =
             aStarSearch<State>(
                 // Graph
                 new PlanGraph(state),
+
                 // State from WorldState
-                new State(state),
+                start,
+
                 // Goal function
-                (st : State) => {
-                return interpretation[0].every( lit => checkLit(lit, st) );
-                },
+                (st : State) => best.every( lit => checkLit(lit, st) ),
+
                 // Heuristsic function
-                heuristic(interpretation[0]),
+                (n : State) => Math.min( ...best.map(x => manhattan(x,n))),
+
                 // Timeout in seconds
                 10
             );
@@ -310,18 +318,13 @@ module Planner {
         return interpret(algorithmResult);
     }
 
+
     /* Manhattan distance */
-    function manhattan(lit : Interpreter.Literal, state : State) : number {
+    function manhattan (lit : Interpreter.Literal, state : State) : number {
 
         // If we are at goal return 0
         if (checkLit(lit, state))
             return 0;
-
-        // Result we want to return
-        let result :number = 0;
-
-        // penalty used for heights
-        var penalty : number = 5;
 
         // Get the objects id's
         let [src,dst] = lit.args;
@@ -330,32 +333,72 @@ module Planner {
             If object exist and is not floor then we find the position of object
             otherwise we get a good position on the floor.
         */
-        let funPos = (obj : string) => (obj && obj !== "floor") ? Interpreter.findPos(obj, state.stacks) : findBestFloorPos();
+        let funPos = (obj : string) => (obj && obj !== "floor") ?
+            Interpreter.findPos(obj, state.stacks) : findBestFloorPos();
 
-        // Find position for src
+        // Penalty function used for heights
+        let penalty = (n :number) => n*n-n;
+
+        // The length from arm to object
+        let armToObj = (obj : string, pos : Interpreter.Pos) =>
+            (obj === state.holding) ? 0 : Math.abs(state.arm - pos.x) ;
+
+        // The cost of uncover a object
+        let uncoverObj = (obj : string, pos : Interpreter.Pos) =>
+            (obj === state.holding) ?
+                0 : penalty(state.stacks[pos.x].length - pos.y + 1 );
+
+        // Merged function for easy use
+        let armAndUncover = (obj : string, pos : Interpreter.Pos) =>
+            armToObj(obj,pos) + uncoverObj(obj,pos);
+
+        // Find position for source
         let srcPos = funPos(src);
 
+        // If relation is holding we don't need destination
+        if (lit.relation === "holding")
+            return armAndUncover(src,srcPos);
+
+        // Find position for destination
         let dstPos = funPos(dst);
 
-        let diffX = Math.abs(srcPos.x - dstPos.x);
+        // All the possible results want to know what the difference between src & dst is
+        let result :number = Math.abs(srcPos.x - dstPos.x);
 
-        //let diffY =
+        // Difference in Y and
+        if (lit.relation === "inside" || lit.relation === "ontop") {
+            result += Math.min(armToObj(src,srcPos),armToObj(dst,dstPos));
+
+            // Are they on the same stack, if so we need not to add, just estimate the cost
+            if (srcPos.x === dstPos.x)
+                result += Math.max(uncoverObj(src,srcPos),uncoverObj(dst,dstPos));
+            else
+                result += uncoverObj(src,srcPos) + uncoverObj(dst,dstPos);
+        }
+
+        else if (lit.relation === "leftof" || lit.relation === "rightof" || lit.relation === "beside")
+            result += Math.min(armAndUncover(src,srcPos), armAndUncover(dst,dstPos));
+
+        else if (lit.relation === "above" || lit.relation === "under")
+            result += armAndUncover(src,srcPos) + uncoverObj(dst,dstPos);
 
         return result;
 
         /* ------------- private functions ------------- */
 
+
         function findBestFloorPos() : Interpreter.Pos {
-            let [_,pos] = state.stacks.reduce(
-                function(returnState, stack, x) {
-                    let [previousValue,bestPos] = returnState;
-                    let heightCost = penalty * stack.length;
-                    let distanceFromArm = Math.abs(state.arm - x);
-                    let currentCost = distanceFromArm + heightCost;
-                    return (currentCost < previousValue) ? [currentCost, x] : returnState;
-            }, [Number.MAX_VALUE,Number.MIN_VALUE]);
+
+            // calculate the cost for each spot on the floor
+            let results = state.stacks.map((stack, x) => penalty(stack.length) + Math.abs(x - state.arm));
+
+            // pick the index of the smallest value
+            let pos = results.indexOf(Math.min.apply(Math,results));
+
+            // Floor at pos is best, floor is at position 0 of course
             return {x : pos, y : 0};
         }
+
     }
 
 }
