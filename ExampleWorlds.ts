@@ -103,9 +103,9 @@ ExampleWorlds["small"] = {
     ]
 };
 
-ExampleWorlds["holdingE"] = {
-    "stacks": [[],["g","l"],[],["k","m","f"],[]],
-    "holding": "e",
+ExampleWorlds["Test"] = {
+    "stacks": [[],["g","l"],["m","f"],["k","e"],[]],
+    "holding": null,
     "arm": 0,
     "objects": {
         "a": { "form":"brick",   "size":"large",  "color":"green" },

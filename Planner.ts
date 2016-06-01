@@ -78,248 +78,238 @@ module Planner {
       * be added using the `push` method.
       */
 
-      //TODO Integration with A* search algorithm and the world
-         //TODO Define Graph & Node in our world
-             //TODO Define Node
-                 // We call it Node for the simplicity
-            class State {
-              constructor(st : State | WorldState){
-                this.stacks = st.stacks.map(x => x.slice());
-                this.holding = st.holding;
-                this.arm = st.arm;
-              };
-              stacks: Stack[];
-              /** Which object the robot is currently holding. */
-              holding: string;
-              /** The column position of the robot arm. */
-              arm: number;
+    /*
+        State is the Node class used in a*.
+        Holds information about the world.
+    */
+    class State {
+        constructor(st : State | WorldState){
+            this.stacks = st.stacks.map(x => x.slice());
+            this.holding = st.holding;
+            this.arm = st.arm;
+        };
 
-              compareTo(other: State) : number {
-                  return 0;
-              }
-              toString() : string {
-                return collections.makeString(this);
-              }
+        stacks: Stack[];
+
+        holding: string;
+
+        arm: number;
+
+        compareTo(other: State) : number {
+            return 0;
+        }
+        toString() : string {
+            return collections.makeString(this);
+        }
+    }
+
+    /*
+        PlanGraph is the Graph type used to build a graph that we can use in A*.
+        Implements the interface Graph from the file with the same name,
+        the functions outgoingEdges & compareNodes is defined and configured to
+        the class State.
+    */
+    class PlanGraph implements Graph<State>{
+        //TODO
+        objects: { [s:string]: ObjectDefinition; };
+        constructor(state : WorldState){this.objects = state.objects;};
+
+
+        outgoingEdges(state : State) : Edge<State>[] {
+            let edges : Edge<State>[] = [];
+            if (typeof state.stacks == "undefined")
+                throw "asdasdasdasd"
+            if(state.arm > 0) {
+                let s = new State(state);
+                s.arm--;
+                edges.push({from: state, to: s, cost: 1});
             }
-
-             //TODO class that implements interface Graph<Node>
-             class PlanGraph implements Graph<State>{
-                 //TODO
-                 objects: { [s:string]: ObjectDefinition; };
-                 constructor(state : WorldState){this.objects = state.objects;};
-
-                 //TODO outgoingEdges(node : Node) : Edge<Node>[];
-                 outgoingEdges(state : State) : Edge<State>[] {
-                     let edges : Edge<State>[] = [];
-                     if (typeof state.stacks == "undefined")
-                      throw "asdasdasdasd"
-                     if(state.arm > 0) {
-                         let s = new State(state);
-                         s.arm--;
-                         edges.push({from: state,
-                                     to: s,
-                                     cost: 1});
-                     }
-                     if(state.arm < state.stacks.length-1) {
-                         let s = new State(state);
-                         s.arm++;
-                         edges.push({from: state,
-                                     to: s,
-                                     cost: 1});
-                     }
-                     if (!state.holding && state.stacks[state.arm] != null) {
-                         let s = new State(state);
-                        // console.log(s.stacks[s.arm].length);
-                         s.holding = s.stacks[s.arm].pop();
-                         if (typeof s.stacks[s.arm] === "undefined")
-                            s.stacks[s.arm] = [];
-                         edges.push({from: state,
-                                     to: s,
-                                     cost: 1});
-                     } else if(state.holding) {
-                        let s = new State(state);
-                        if (!s.stacks[s.arm]) //{
-                            s.stacks[s.arm] = [];
-                       let fun = Interpreter.filterDst;
-                       let dstStack = s.stacks[s.arm];
-                       let src = this.objects[state.holding];
-                       let dst = this.objects[dstStack[dstStack.length-1]];
-                      if (dstStack[dstStack.length-1] !== "floor" &&
-                        typeof dst !== "undefined" &&  typeof src !== "undefined") {
-                        if(!fun("ontop",src,dst) || !fun("inside",src,dst)) {
-                          s.stacks[s.arm].push(s.holding);
-                          s.holding = null;
-                          edges.push({from: state,
-                                       to: s,
-                                       cost: 1});
-                        }
-                     } else {
+            if(state.arm < state.stacks.length-1) {
+                let s = new State(state);
+                s.arm++;
+                edges.push({from: state, to: s, cost: 1});
+            }
+            if (!state.holding && state.stacks[state.arm] != null) {
+                let s = new State(state);
+                s.holding = s.stacks[s.arm].pop();
+                if (typeof s.stacks[s.arm] === "undefined")
+                    s.stacks[s.arm] = [];
+                edges.push({from: state, to: s, cost: 1});
+            } else if(state.holding) {
+                let s = new State(state);
+                if (!s.stacks[s.arm])
+                    s.stacks[s.arm] = [];
+                let fun = Interpreter.filterDst;
+                let dstStack = s.stacks[s.arm];
+                let src = this.objects[state.holding];
+                let dst = this.objects[dstStack[dstStack.length-1]];
+                if (dstStack[dstStack.length-1] !== "floor" &&
+                    typeof dst !== "undefined" &&  typeof src !== "undefined")
+                {
+                    if(!fun("ontop",src,dst) || !fun("inside",src,dst)) {
                         s.stacks[s.arm].push(s.holding);
                         s.holding = null;
-                        edges.push({from: state,
-                                     to: s,
-                                     cost: 1});
-                      }
-                     }
-                     return edges;
-                 }
+                        edges.push({from: state, to: s, cost: 1});
+                    }
+                } else {
+                    s.stacks[s.arm].push(s.holding);
+                    s.holding = null;
+                    edges.push({from: state,
+                    to: s,
+                    cost: 1});
+                }
+            }
+            return edges;
+        }
 
-                 compareNodes(a : State, b : State) : number {
-                         return a.compareTo(b);
-                 };
-             }
+        compareNodes(a : State, b : State) : number {
+            return a.compareTo(b);
+        }
+    }
 
-         function checkLit(lit : Interpreter.Literal,
-             state : State): boolean
-         {
-             let rel = lit.relation;
-             let a : Interpreter.Pos = Interpreter.findPos(lit.args[0],state.stacks);
-             let b : Interpreter.Pos = Interpreter.findPos(lit.args[1],state.stacks);
-             let onFloor :boolean;
+    /*
+        CheckLit is a function that checks whether the literal is legit in the
+        given state or not
+    */
+    function checkLit(lit : Interpreter.Literal,
+     state : State): boolean
+    {
+        let rel = lit.relation;
+        let a : Interpreter.Pos = Interpreter.findPos(lit.args[0],state.stacks);
+        let b : Interpreter.Pos = Interpreter.findPos(lit.args[1],state.stacks);
+        let onFloor :boolean;
 
-             if (typeof state.stacks[state.arm] !== "undefined")
-              onFloor = (lit.args[1] === "floor" &&
-              state.stacks[state.arm][0] === lit.args[0]);
-            else
-              onFloor = false;
+        if (typeof state.stacks[state.arm] !== "undefined")
+            onFloor = (lit.args[1] === "floor" &&
+            state.stacks[state.arm][0] === lit.args[0]);
+        else
+            onFloor = false;
             if (a.x >= state.stacks.length || b.x >= state.stacks.length)
-              throw "a.x = "+a.x+", b.x = "+b.x;
+                throw "a.x = "+a.x+", b.x = "+b.x;
 
-             return onFloor ||
-                 (rel === "holding" && state.holding === lit.args[0]) ||
-                 (rel === "inside" && a.x === b.x && (a.y - 1) === b.y) ||
-                 (rel === "ontop" && a.x === b.x && (a.y - 1) === b.y) ||
-                 (rel === "above" && a.x === b.x && a.y > b.y) ||
-                 (rel === "under" && a.x === b.x && a.y < b.y) ||
-                 (rel === "leftof" && a.x < b.x && a.x > -1) ||
-                 (rel === "rightof" && a.x > b.x && b.x > -1 && a.x < state.stacks.length) ||
-                 (rel === "beside" && Math.abs(a.x-b.x) === 1);
-         }
-/*
-         interface Pos {
-             x : number;
-             y : number;
-         }
+        return onFloor ||
+        (rel === "holding" && state.holding === lit.args[0]) ||
+        (rel === "inside" && a.x === b.x && (a.y - 1) === b.y) ||
+        (rel === "ontop" && a.x === b.x && (a.y - 1) === b.y) ||
+        (rel === "above" && a.x === b.x && a.y > b.y) ||
+        (rel === "under" && a.x === b.x && a.y < b.y) ||
+        (rel === "leftof" && a.x < b.x && a.x > -1) ||
+        (rel === "rightof" && a.x > b.x && b.x > -1 && a.x < state.stacks.length) ||
+        (rel === "beside" && Math.abs(a.x-b.x) === 1);
+    }
 
-         function findPos(obj : string, st : State) : Pos {
-             for(let i : number = 0; i < st.stacks.length ; i++)
-                 for(let j : number = 0; j < st.stacks[i].length ; j++)
-                     if (st.stacks[i][j] === obj)
-                         return {x : i, y: j};
+    //TODO Heuristic function (n:Node) => number
+    //TODO @Param ?
+    // interpretation : Interpreter.DNFFormula,
+    // state : WorldState
+    function heuristic(lits:Interpreter.Literal[]) : (n:State) => number {
+        return (n : State) => {
 
-             return {x : -2, y: -2};
-         }
-*/
-         //TODO Heuristic function (n:Node) => number
-             //TODO @Param ?
-                 // interpretation : Interpreter.DNFFormula,
-                 // state : WorldState
-         function heuristic(lits:Interpreter.Literal[]) : (n:State) => number {
-             return (n : State) => {
+            var h : number = 0;
 
-                 var h : number = 0;
+            var sObj : Interpreter.Pos = null;
+            var dObj : Interpreter.Pos = null;
 
-                 var sObj : Interpreter.Pos = null;
-                 var dObj : Interpreter.Pos = null;
+            var lit : Interpreter.Literal = lits[0];
 
+            sObj = Interpreter.findPos(lit.args[0], n.stacks);
+            dObj = Interpreter.findPos(lit.args[0], n.stacks);
 
-                 var lit : Interpreter.Literal = lits[0];
+            if(lit.relation === "holding" || lit.relation === "above"){
+                if(n.holding !== lit.args[0])
+                    h = calculateH(sObj, n);
 
-                 sObj = Interpreter.findPos(lit.args[0], n.stacks);
-                 dObj = Interpreter.findPos(lit.args[0], n.stacks);
+            } else if(lit.relation === "rightof" ||
+                lit.relation === "leftof" ||
+                lit.relation === "beside") {
 
-                 if(lit.relation === "holding" || lit.relation === "above"){
-                    if(n.holding !== lit.args[0])
-                        h = calculateH(sObj, n);
+                if(n.holding !== lit.args[0])
+                    h = calculateH(sObj, n);
 
-                 } else if(lit.relation === "rightof" ||
-                           lit.relation === "leftof" ||
-                           lit.relation === "beside"){
+            } else if(lit.relation === "inside" ||
+                lit.relation === "ontop" ||
+                lit.relation === "under") {
 
-                     if(n.holding !== lit.args[0])
-                         h = calculateH(sObj, n);
-                 } else if(lit.relation === "inside" ||
-                           lit.relation === "ontop" ||
-                           lit.relation === "under"){
-                     if(n.holding !== lit.args[0])
-                         h = calculateH(sObj, n);
+                if(n.holding !== lit.args[0])
+                    h = calculateH(sObj, n);
 
-                     h += calculateH(dObj, n);
-                 }
-                // console.log("HEURISTIC " + h);
-                 return h;
-             };
-         }
+                h += calculateH(dObj, n);
+            }
+            // console.log("HEURISTIC " + h);
+            return h;
+        };
+    }
 
-         function calculateH(objPos : Interpreter.Pos, state : State) : number{
+    function calculateH(objPos : Interpreter.Pos, state : State) : number{
 
-             var penalty : number = 5;
-             var h : number = 0;
-             var diff : number = 0;
-             //var dist : number = 0;
-             // Distance from arm to source object
+        var penalty : number = 5;
+        var h : number = 0;
+        var diff : number = 0;
+        //var dist : number = 0;
+        // Distance from arm to source object
 
-             //dist = Math.abs(state.arm - objPos.x);
-             //h = dist;
+        //dist = Math.abs(state.arm - objPos.x);
+        //h = dist;
 
-             // How many objects are above the object in the stack?
+        // How many objects are above the object in the stack?
 
-             if(state.stacks[objPos.x] != null)
-                 diff = (state.stacks[objPos.x].length - 1) - objPos.y;
+        if(state.stacks[objPos.x] != null)
+            diff = (state.stacks[objPos.x].length - 1) - objPos.y;
 
-             // If there are objects above the object, add penalty
-             // for each object.
-             if(diff > 0)
-                 h += diff * penalty;
+        // If there are objects above the object, add penalty
+        // for each object.
+        if(diff > 0)
+            h += diff * penalty;
 
-             return h;
-         }
+        return h;
+    }
 
-     // A* result must be converted to string []
-     //TODO SearchResult<Node> to string []
-     function interpret(result : SearchResult<State>) : string [] {
+    // A* result must be converted to string []
+    //TODO SearchResult<Node> to string []
+    function interpret(result : SearchResult<State>) : string [] {
 
-         // Only need path?
-         let path : State[]  = result.path;
+        // Only need path?
+        let path : State[]  = result.path;
 
-         // The plan that we will return
-         let plan : string[] = [];
+        // The plan that we will return
+        let plan : string[] = [];
 
-         for (var i = 0; i < path.length - 1; i++) {
-             var cs : State = path[i];
-             var ns : State = path[i+1];
+        for (var i = 0; i < path.length - 1; i++) {
+            var cs : State = path[i];
+            var ns : State = path[i+1];
 
-             if(ns.arm < cs.arm)
-                 plan.push("l");
-             else if(ns.arm > cs.arm)
-                 plan.push("r");
-             else if(ns.holding && !cs.holding)
-                 plan.push("p");
-             else if(!ns.holding && cs.holding)
-                 plan.push("d");
+            if(ns.arm < cs.arm)
+                plan.push("l");
+            else if(ns.arm > cs.arm)
+                plan.push("r");
+            else if(ns.holding && !cs.holding)
+                plan.push("p");
+            else if(!ns.holding && cs.holding)
+                plan.push("d");
+        }
+        return plan;
+    }
 
-         }
-         return plan;
-     }
+    function planInterpretation(
+        interpretation : Interpreter.DNFFormula,
+        state : WorldState) : string[]
+    {
+        let algorithmResult =
+            aStarSearch<State>(
+                // Graph
+                new PlanGraph(state),
+                // State from WorldState
+                new State(state),
+                // Goal function
+                (state : State) => {
+                return interpretation[0].every( lit => checkLit(lit, state) );
+                },
+                // Heuristsic function
+                heuristic(interpretation[0]),
+                // Timeout in seconds
+                2
+            );
 
-     function planInterpretation(
-         interpretation : Interpreter.DNFFormula,
-         state : WorldState) : string[]
-     {
-       return interpret(
-              aStarSearch<State>(
-              // Graph
-               new PlanGraph(state),
-               // State from WorldState
-               new State(state),
-               // Goal function
-               (state : State) => {
-                 return interpretation[0].every( lit => checkLit(lit, state) );
-               },
-               // Heuristsic function
-               heuristic(interpretation[0]),
-               // Timeout in seconds
-               60
-           ));
-     }
+        return interpret(algorithmResult);
+    }
  }

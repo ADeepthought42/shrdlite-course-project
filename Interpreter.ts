@@ -122,6 +122,7 @@ possible parse of the command. No need to change this one.
         // Command handler
         if (cmd.command === "take") {
 
+            // Find source objects that match the entity
             srcObjs = findObjects(cmd.entity, state, true);
 
             for(let src of srcObjs)
@@ -129,11 +130,14 @@ possible parse of the command. No need to change this one.
                   relation: "holding", args: [src]}]);
 
         } else if (cmd.command === "put") {
+
+            // Find destination objects that match the entity of location
             dstObjs = findObjects(cmd.location.entity, state, false);
             interpretation = [[{polarity: true, relation: loc.relation,
             args: [state.holding, dstObjs[0]]}]];
 
         } else if (cmd.command === "move") {
+            // Find source & destination objects that match the entities
             srcObjs = findObjects(cmd.entity, state, true);
             dstObjs = findObjects(cmd.location.entity, state, false);
 
@@ -155,6 +159,13 @@ possible parse of the command. No need to change this one.
 
                     // Remove all cases where dst are equal to src
                     hash.setValue(src, dstObs = dstObs.filter(x => x !== src));
+
+                    /* Varibles used
+                        - Position in stack (x , y)
+                        - Objectdefinition
+                        - the variable filter which is partially responsible
+                          for filtering out the source
+                    */
                     let srcPos = findPos(src,state.stacks);
                     let src_obj : ObjectDefinition = state.objects[src];
                     let filter : boolean  = true;
@@ -163,9 +174,11 @@ possible parse of the command. No need to change this one.
                         let dstPos = findPos(dst,state.stacks);
                         let dst_obj : ObjectDefinition = state.objects[dst];
 
+                        // If the destination ain't floor and filterDst holds remove dst
                         if (dst !== "floor" && filterDst(loc.relation,src_obj,dst_obj))
                             hash.setValue(src, dstObs = dstObs.filter(x => x !== dst));
 
+                        // If all results from filterFun is true then we must remove the source
                         filter = filter && filterFun(loc.relation,srcPos, dstPos, dst === 'floor');
 
                     }
@@ -198,12 +211,18 @@ possible parse of the command. No need to change this one.
       isSrc : boolean
     ) : string[]
     {
+        /* Set variables
+            - We want the object with definitions, so need to check if entity
+              object is complex.
+            - if it is complex we take the nested object otherwise we just take
+              the object as it is.
+        */
         let obj : Parser.Object = entity.object;
         let isComplex = obj.location != null;
-        let asd = isComplex ? obj.object : obj;
+        let real = isComplex ? obj.object : obj;
 
         // Get Definition
-        let [objForm, objColor, objSize] = [asd.form, asd.color, asd.size];
+        let [objForm, objColor, objSize] = [real.form, real.color, real.size];
         let objects : string[] = Array.prototype.concat.apply([], state.stacks);
 
         if(state.holding)
@@ -252,6 +271,7 @@ possible parse of the command. No need to change this one.
             });
         });
 
+        // Have we anything to return?
         if (!objects.length)
             throw "Fail in the findObjects function: Objects do not exist";
 
@@ -301,27 +321,42 @@ possible parse of the command. No need to change this one.
       floor : boolean) : boolean
     {
       return (
-          relation === "inside" && (src.x === dst.x && src.y - 1 === dst.y || (floor && src.y === 0)) ||
-          relation === "ontop"  && (src.x === dst.x && src.y - 1 === dst.y || (floor && src.y === 0)) ||
-          relation === "above"  && src.x === dst.x && src.y > dst.y ||
-          relation === "under"  && src.x === dst.x && src.y < dst.y) ||
-          relation === "beside" && Math.abs(src.x-dst.x) === 1;
+          relation === "inside"  && (src.x === dst.x && src.y - 1 === dst.y || floor && src.y === 0) ||
+          relation === "ontop"   && (src.x === dst.x && src.y - 1 === dst.y || floor && src.y === 0) ||
+          relation === "above"   && src.x === dst.x && src.y > dst.y ||
+          relation === "under"   && src.x === dst.x && src.y < dst.y) ||
+          relation === "beside"  && Math.abs(src.x-dst.x) === 1 ;
     }
 
+    /*
+        Interface used for the position of objects in the world
+             \_/
+                               Λ
+                     f         |
+         l           m         y
+         e   g       k         |
+         +---+---+---+---+---+ V
+         0   1   2   3   4   5
+         <-------- x ------->
+
+    */
     export interface Pos {
         x : number;
         y : number;
     }
 
+    /*
+        Function that find the position of object in the world,
+        if they do not exist it resturns Number.MIN_VALUE in
+        both x and y.
+    */
     export function findPos(obj : string, st : Stack[] ) : Pos {
         for(let i : number = 0; i < st.length ; i++)
             for(let j : number = 0; j < st[i].length ; j++)
                 if (st[i][j] === obj)
                     return {x : i, y: j};
 
-        return {x : -100, y: -100};
+        return {x : Number.MIN_VALUE, y: Number.MIN_VALUE};
     }
-
-
 
 }
