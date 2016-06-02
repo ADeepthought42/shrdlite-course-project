@@ -254,15 +254,10 @@ module Planner {
         return interpret(algorithmResult);
     }
 
-<<<<<<< HEAD
 
 
 
     /* Manhattan distance heuristic function */
-=======
-    /* Manhattan distance */
->>>>>>> fd2ceedf9265ee7ece476ba77b3bd04cebc84c2f
-
 
     function manhattan (lit : Interpreter.Literal, state : State) : number {
 
