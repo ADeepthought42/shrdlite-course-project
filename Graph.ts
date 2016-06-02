@@ -88,8 +88,8 @@ class Visited<Node>{
 }
 
 /**
-* A\* search implementation, parameterised by a `Node` type. 
-* 
+* A\* search implementation, parameterised by a `Node` type.
+*
 * @param graph The graph on which to perform A\* search.
 * @param start The initial node.
 * @param goal A function that returns true when given a goal node. Used to determine if the algorithm has reached the goal.
@@ -123,6 +123,7 @@ function aStarSearch<Node> (
         hRank:hRank,
         fRank:0+hRank
     });
+
     open.enqueue(start);
 
     // search for a goal until no more open nodes exist or time is up
@@ -143,6 +144,7 @@ function aStarSearch<Node> (
         for (var edge of graph.outgoingEdges(current)) {
             // calculate the cost of traveling the edge to next node
             var cost : number = visited.getGRank(current) + edge.cost;
+
             if (!visited.contains(edge.to)) {
                 // New node found, add it to visited with what we know
                 var hRank : number = heuristics(edge.to);
