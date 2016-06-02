@@ -1,5 +1,6 @@
 ///<reference path="World.ts"/>
 ///<reference path="Parser.ts"/>
+///<reference path="SVGWorld.ts"/>
 ///<reference path="lib/collections.ts"/>
 
 /**
@@ -132,9 +133,12 @@ possible parse of the command. No need to change this one.
         }
         else if (cmd.command === "where") {
 
+            let fun : (s:string) => any = (typeof state.parent !== "undefined") ?
+                (x => {state.parent.printSystemOutput(x);}) : (x => {throw x;});
+
             // Find source objects that match the entity
             if (cmd.entity.object.form === 'floor')
-                throw "The floor is under every object in this world";
+                fun("The floor is under every object in this world");
 
             srcObjs = findObjects(cmd.entity, state, true);
             let whereStartText = "-------------"+'\n';
@@ -143,6 +147,11 @@ possible parse of the command. No need to change this one.
 
             srcObjs.forEach(
                 function(src,i,_) {
+
+                    if (src === state.holding)
+                        returnString += "\n\nNr: " + (i+1) + " is hold in the sky!\n"
+                    else {
+
                     let pos : Pos = findPos(src,state.stacks);
 
                     let findObjDef = (x:number,y:number) =>
@@ -185,9 +194,11 @@ possible parse of the command. No need to change this one.
 
                     returnString+= "\n\nNr: " + (i+1) +" of that object definition are at \n"+
                                     posString + rightSide + leftSide + under + over;
+                    }
             });
 
-            throw returnString;
+            fun(returnString);
+            throw "What do you want to know now?";
         }
         else if (cmd.command === "put") {
 

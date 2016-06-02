@@ -32,6 +32,8 @@ interface WorldState {
     /** List of predefined example sentences/utterances that the user can choose
     from in the UI. */
     examples: string[];
+
+    parent? : World;
 }
 
 type Stack = string[];

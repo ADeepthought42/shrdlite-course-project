@@ -301,7 +301,7 @@ module Planner {
                 else
                     return dstPenalty(isZero(state.stacks[pos.x].length - pos.y));
             }
-            
+
         }
 
         // Merged function for easy use

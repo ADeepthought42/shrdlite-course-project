@@ -28,6 +28,7 @@ class SVGWorld implements World {
         });
         this.containers.inputform.submit(() => this.handleUserInput.call(this));
         this.disableInput();
+        this.currentState.parent = this; 
     }
 
     //////////////////////////////////////////////////////////////////////
@@ -110,11 +111,11 @@ class SVGWorld implements World {
         this.containers.world.empty();
         this.printSystemOutput("Please wait while I populate the world.")
 
-        var viewBox : number[] = [0, 0, this.canvasWidth + 2 * this.wallSeparation, 
+        var viewBox : number[] = [0, 0, this.canvasWidth + 2 * this.wallSeparation,
                                   this.canvasHeight + this.floorThickness];
         var svg = $(this.SVG('svg')).attr({
-            viewBox: viewBox.join(' '), 
-            width: viewBox[2], 
+            viewBox: viewBox.join(' '),
+            width: viewBox[2],
             height: viewBox[3],
         }).appendTo(this.containers.world);
 
@@ -131,10 +132,10 @@ class SVGWorld implements World {
         $(this.SVG('line')).attr({
             id:'arm',
             x1: this.stackWidth() / 2,
-            y1: this.armSize * this.stackWidth() - this.canvasHeight, 
-            x2: this.stackWidth() / 2, 
-            y2: this.armSize * this.stackWidth(), 
-            stroke: 'black', 
+            y1: this.armSize * this.stackWidth() - this.canvasHeight,
+            x2: this.stackWidth() / 2,
+            y2: this.armSize * this.stackWidth(),
+            stroke: 'black',
             'stroke-width': this.armSize * this.stackWidth(),
         }).appendTo(svg);
 
@@ -327,7 +328,7 @@ class SVGWorld implements World {
     }
 
     //////////////////////////////////////////////////////////////////////
-    // Methods for getting information about objects 
+    // Methods for getting information about objects
 
     private getObjectDimensions(objectid : string) {
         var attrs = this.currentState.objects[objectid];
@@ -379,17 +380,17 @@ class SVGWorld implements World {
         case 'brick':
         case 'plank':
             object = $(this.SVG('rect')).attr({
-                x: xleft, 
-                y: ytop, 
-                width: dim.width, 
+                x: xleft,
+                y: ytop,
+                width: dim.width,
                 height: dim.height
             });
             break;
         case 'ball':
             object = $(this.SVG('ellipse')).attr({
-                cx: xcenter, 
-                cy: ycenter, 
-                rx: xradius, 
+                cx: xcenter,
+                cy: ycenter,
+                rx: xradius,
                 ry: yradius
             });
             break;
@@ -400,7 +401,7 @@ class SVGWorld implements World {
             });
             break;
         case 'box':
-            var points = [xleft, ytop, xleft, ybottom, xright, ybottom, xright, ytop, 
+            var points = [xleft, ytop, xleft, ybottom, xright, ybottom, xright, ytop,
                           xright-dim.thickness, ytop, xright-dim.thickness, ybottom-dim.thickness,
                           xleft+dim.thickness, ybottom-dim.thickness, xleft+dim.thickness, ytop];
             object = $(this.SVG('polygon')).attr({
@@ -408,8 +409,8 @@ class SVGWorld implements World {
             });
             break;
         case 'table':
-            var points = [xleft, ytop, xright, ytop, xright, ytop+dim.thickness, 
-                          xmidright, ytop+dim.thickness, xmidright, ybottom, 
+            var points = [xleft, ytop, xright, ytop, xright, ytop+dim.thickness,
+                          xmidright, ytop+dim.thickness, xmidright, ybottom,
                           xmidright-dim.thickness, ybottom, xmidright-dim.thickness, ytop+dim.thickness,
                           xmidleft+dim.thickness, ytop+dim.thickness, xmidleft+dim.thickness, ybottom,
                           xmidleft, ybottom, xmidleft, ytop+dim.thickness, xleft, ytop+dim.thickness];
@@ -420,13 +421,13 @@ class SVGWorld implements World {
         }
         object.attr({
             id: objectid,
-            stroke: 'black', 
-            'stroke-width': this.boxSpacing() / 2, 
-            fill: attrs.color, 
+            stroke: 'black',
+            'stroke-width': this.boxSpacing() / 2,
+            fill: attrs.color,
         });
         object.appendTo(svg);
 
-        var path = ["M", stacknr * this.stackWidth() + this.wallSeparation, 
+        var path = ["M", stacknr * this.stackWidth() + this.wallSeparation,
                     -(this.canvasHeight + this.floorThickness)];
         this.animateMotion(object, path, 0, 0);
         path.push("V", -altitude);
@@ -437,17 +438,17 @@ class SVGWorld implements World {
     // Methods for handling user input and system output
 
     private enableInput() {
-        this.containers.inputexamples.prop('disabled', false).val(''); 
+        this.containers.inputexamples.prop('disabled', false).val('');
         this.containers.inputexamples.find("option:first").attr('selected', 'selected');
-        this.containers.userinput.prop('disabled', false); 
+        this.containers.userinput.prop('disabled', false);
         this.containers.userinput.focus().select();
     }
 
     private disableInput() {
         this.containers.inputexamples.blur();
-        this.containers.inputexamples.prop('disabled', true); 
+        this.containers.inputexamples.prop('disabled', true);
         this.containers.userinput.blur();
-        this.containers.userinput.prop('disabled', true); 
+        this.containers.userinput.prop('disabled', true);
     }
 
     private inputCallback : (input:string) => void;
@@ -467,7 +468,7 @@ class SVGWorld implements World {
 
 
 //////////////////////////////////////////////////////////////////////
-// Additions to the TypeScript standard library 
+// Additions to the TypeScript standard library
 
 // Support for SVG animations
 
@@ -477,11 +478,11 @@ interface Element {
 
 // Support for HTML5 speech synthesis
 
-interface Window { 
+interface Window {
     speechSynthesis: {speaking : boolean;
-                      speak(sputt: SpeechSynthesisUtterance) : void}; 
+                      speak(sputt: SpeechSynthesisUtterance) : void};
 }
 
 declare class SpeechSynthesisUtterance {
-    constructor(utterance: string); 
+    constructor(utterance: string);
 }
