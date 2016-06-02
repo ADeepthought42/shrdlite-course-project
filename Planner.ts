@@ -110,7 +110,6 @@ module Planner {
         the class State.
     */
     class PlanGraph implements Graph<State>{
-        //TODO
         objects: { [s:string]: ObjectDefinition; };
         constructor(state : WorldState){this.objects = state.objects;};
 
@@ -195,71 +194,6 @@ module Planner {
         (rel === "beside" && Math.abs(src.x-dst.x) === 1));
     }
 
-    //TODO Heuristic function (n:Node) => number
-    //TODO @Param ?
-    // interpretation : Interpreter.DNFFormula,
-    // state : WorldState
-    function heuristic(lits:Interpreter.Literal[]) : (n:State) => number {
-        return (n : State) => {
-
-            var h : number = 0;
-
-            var sObj : Interpreter.Pos = null;
-            var dObj : Interpreter.Pos = null;
-
-            var lit : Interpreter.Literal = lits[0];
-
-            sObj = Interpreter.findPos(lit.args[0], n.stacks);
-            dObj = Interpreter.findPos(lit.args[0], n.stacks);
-
-            if(lit.relation === "holding" || lit.relation === "above"){
-                if(n.holding !== lit.args[0])
-                    h = calculateH(sObj, n);
-
-            } else if(lit.relation === "rightof" ||
-                lit.relation === "leftof" ||
-                lit.relation === "beside") {
-
-                if(n.holding !== lit.args[0])
-                    h = calculateH(sObj, n);
-
-            } else if(lit.relation === "inside" ||
-                lit.relation === "ontop" ||
-                lit.relation === "under") {
-
-                if(n.holding !== lit.args[0])
-                    h = calculateH(sObj, n);
-
-                h += calculateH(dObj, n);
-            }
-            // console.log("HEURISTIC " + h);
-            return h;
-        };
-    }
-
-    function calculateH(objPos : Interpreter.Pos, state : State) : number{
-
-        var penalty : number = 5;
-        var h : number = 0;
-        var diff : number = 0;
-        //var dist : number = 0;
-        // Distance from arm to source object
-
-        //dist = Math.abs(state.arm - objPos.x);
-        //h = dist;
-
-        // How many objects are above the object in the stack?
-
-        if(state.stacks[objPos.x] != null)
-            diff = (state.stacks[objPos.x].length - 1) - objPos.y;
-
-        // If there are objects above the object, add penalty
-        // for each object.
-        if(diff > 0)
-            h += diff * penalty;
-
-        return h;
-    }
 
     // A* result must be converted to string []
     //TODO SearchResult<Node> to string []
@@ -271,17 +205,19 @@ module Planner {
         // The plan that we will return
         let plan : string[] = [];
 
+        // Compares each current state with the previous one and adds the
+        // difference (as a string - l,r,p,d) to a list
         for (var i = 0; i < path.length - 1; i++) {
-            var cs : State = path[i];
-            var ns : State = path[i+1];
+            var currentState : State = path[i];
+            var nextState : State = path[i+1];
 
-            if(ns.arm < cs.arm)
+            if(nextState.arm < currentState.arm)
                 plan.push("l");
-            else if(ns.arm > cs.arm)
+            else if(nextState.arm > currentState.arm)
                 plan.push("r");
-            else if(ns.holding && !cs.holding)
+            else if(nextState.holding && !currentState.holding)
                 plan.push("p");
-            else if(!ns.holding && cs.holding)
+            else if(!nextState.holding && currentState.holding)
                 plan.push("d");
         }
         return plan;
@@ -321,16 +257,16 @@ module Planner {
 
 
 
-    /* Manhattan distance */
+    /* Manhattan distance heuristic function */
 
 
     function manhattan (lit : Interpreter.Literal, state : State) : number {
 
-        // If we are at goal return 0
+        // If state is the goal state, return 0
         if (checkLit(lit, state))
             return 0;
 
-        // Get the objects id's
+        // Get the objects id's from the list of arguments
         let [src,dst] = lit.args;
 
         /*
@@ -340,10 +276,10 @@ module Planner {
         let funPos = (obj : string) => (obj && obj !== "floor") ?
             Interpreter.findPos(obj, state.stacks) : findBestFloorPos();
 
-        // Penalty function used for heights
+        // Penalty function used for source object in stacks
         let srcPenalty = (n :number) => 5*n;
 
-        // Penalty function used for heights
+        // Penalty function used for destination object in stacks
         let dstPenalty = (n :number) => 4*n;
 
         let isZero = (n :number) => (n === 0) ? 0 : n-1;
@@ -352,14 +288,17 @@ module Planner {
         let armToObj = (obj : string, pos : Interpreter.Pos) =>
             (obj === state.holding) ? 0 : Math.abs(state.arm - pos.x) ;
 
-        // The cost of uncover a object
+        // The cost of uncover an object
         let uncoverObj = (obj : string, pos : Interpreter.Pos, str : string) => {
+            // If we are holding an object we at least have to put it down
             if(obj === state.holding){
                 return 1;
             }
             else {
+                // If source object, use source penalty function
                 if(str === "src")
                     return srcPenalty(isZero(state.stacks[pos.x].length - pos.y));
+                // If destination object, use destination penalty function
                 else
                     return dstPenalty(isZero(state.stacks[pos.x].length - pos.y));
             }
@@ -395,7 +334,6 @@ module Planner {
             if (srcPos.x === dstPos.x)
                 result += Math.max(uncoverObj(src,srcPos,"src"),uncoverObj(dst,dstPos,"dst"));
             else{
-                //console.log("Uncover dst " + uncoverObj(dst,dstPos,"dst"));
                 result += uncoverObj(src,srcPos,"src") + uncoverObj(dst,dstPos,"dst");
             }
         }
