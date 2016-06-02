@@ -314,7 +314,7 @@ module Planner {
                 // Timeout in seconds
                 10
             );
-
+        console.log(algorithmResult.cost)
         return interpret(algorithmResult);
     }
 
@@ -341,7 +341,7 @@ module Planner {
             Interpreter.findPos(obj, state.stacks) : findBestFloorPos();
 
         // Penalty function used for heights
-        let penalty = (n :number) => n*n;
+        let penalty = (n :number) => 2*n*n;
 
         // The length from arm to object
         let armToObj = (obj : string, pos : Interpreter.Pos) =>
@@ -350,7 +350,7 @@ module Planner {
         // The cost of uncover a object
         let uncoverObj = (obj : string, pos : Interpreter.Pos) =>
             (obj === state.holding) ?
-                0 : penalty(state.stacks[pos.x].length - pos.y + 1 );
+                0 : penalty(state.stacks[pos.x].length - pos.y - 1 );
 
         // Merged function for easy use
         let armAndUncover = (obj : string, pos : Interpreter.Pos) =>
