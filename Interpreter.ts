@@ -129,7 +129,67 @@ possible parse of the command. No need to change this one.
               interpretation.push([{polarity: true,
                   relation: "holding", args: [src]}]);
 
-        } else if (cmd.command === "put") {
+        }
+        else if (cmd.command === "where") {
+
+            // Find source objects that match the entity
+            if (cmd.entity.object.form === 'floor')
+                throw "The floor is under every object in this world";
+
+            srcObjs = findObjects(cmd.entity, state, true);
+            let whereStartText = "-------------"+'\n';
+
+            let returnString : string = "";
+
+            srcObjs.forEach(
+                function(src,i,_) {
+                    let pos : Pos = findPos(src,state.stacks);
+
+                    let findObjDef = (x:number,y:number) =>
+                        (!state.stacks[pos.x+x]) ? null:
+                        state.objects[state.stacks[pos.x+x][pos.y+y]];
+
+                    let left = findObjDef(-1,0);
+                    let right = findObjDef(1,0);
+                    let below = (pos.y <= 0) ? null : findObjDef(0,-1);
+                    let upwards = (state.stacks[pos.x].length &&
+                        pos.y >= state.stacks[pos.x].length-1) ? null : findObjDef(0,1);
+
+                    let objectDefToStr = (obj : ObjectDefinition) => {
+                        let [form,size,color] = [obj.form,obj.size,obj.color]
+                        let str :string = "object that has ";
+                        str += ((!form) ? "" : "the form " + form + ", ")+
+                               ((!size) ? "" : "the size " + size + ", ")+
+                               ((!color) ? "" : "the color " + color + ", ");
+
+                        return (!form && !size && !color) ? "" : str;
+                    }
+
+
+                    let leftSide = "There are a "+((!left) ? (
+                        (pos.x <= 0) ? "wall " : "nothing directly " )  :
+                        objectDefToStr(left))+"to the left.\n";
+
+                    let rightSide = "There are a "+((!right) ? (
+                        (pos.x >= state.stacks.length-1) ? "wall " : "nothing directly " ) :
+                        objectDefToStr(right))+"to the right.\n";
+
+                    let under = (!below) ? "The floor is under it!\n" :
+                        "Direct under there is a "+objectDefToStr(below)+"way down is lava.\n";
+
+                    let over = (!upwards) ? "There is no object on it!\n" :
+                        "Ontop there is a "+objectDefToStr(upwards)+"way up is the sky.\n";
+
+                    let posString = "position "+ (pos.x+1) +" from the left wall and "+ (pos.y+1) +
+                        " up from the floor.\n";
+
+                    returnString+= "\n\nNr: " + (i+1) +" of that object definition are at \n"+
+                                    posString + rightSide + leftSide + under + over;
+            });
+
+            throw returnString;
+        }
+        else if (cmd.command === "put") {
 
             // Find destination objects that match the entity of location
             dstObjs = findObjects(cmd.location.entity, state, false);
