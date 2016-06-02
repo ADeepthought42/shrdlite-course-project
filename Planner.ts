@@ -341,27 +341,31 @@ module Planner {
             Interpreter.findPos(obj, state.stacks) : findBestFloorPos();
 
         // Penalty function used for heights
-        let penalty = (n :number) => 2*n*n;
+        let srcPenalty = (n :number) => 5*n;
+
+        // Penalty function used for heights
+        let dstPenalty = (n :number) => 5*n-n+1;
 
         // The length from arm to object
         let armToObj = (obj : string, pos : Interpreter.Pos) =>
             (obj === state.holding) ? 0 : Math.abs(state.arm - pos.x) ;
 
         // The cost of uncover a object
-        let uncoverObj = (obj : string, pos : Interpreter.Pos) =>
-            (obj === state.holding) ?
-                0 : penalty(state.stacks[pos.x].length - pos.y - 1 );
+        let uncoverObj = (obj : string, pos : Interpreter.Pos, str : string) =>
+            (obj === state.holding) ? 0 : ((str === "src") ?
+                srcPenalty(state.stacks[pos.x].length - pos.y - 1 ) :
+                    dstPenalty(state.stacks[pos.x].length - pos.y - 1 ));
 
         // Merged function for easy use
-        let armAndUncover = (obj : string, pos : Interpreter.Pos) =>
-            armToObj(obj,pos) + uncoverObj(obj,pos);
+        let armAndUncover = (obj : string, pos : Interpreter.Pos, str : string) =>
+            armToObj(obj,pos) + uncoverObj(obj,pos,str);
 
         // Find position for source
         let srcPos = funPos(src);
 
         // If relation is holding we don't need destination
         if (lit.relation === "holding") {
-            let res = armAndUncover(src,srcPos);
+            let res = armAndUncover(src,srcPos,"src");
             console.log(res);
             return res;
         }
@@ -379,18 +383,19 @@ module Planner {
 
             // Are they on the same stack, if so we need not to add, just estimate the cost
             if (srcPos.x === dstPos.x)
-                result += Math.max(uncoverObj(src,srcPos),uncoverObj(dst,dstPos));
-            else
-                result += uncoverObj(src,srcPos) + uncoverObj(dst,dstPos);
+                result += Math.max(uncoverObj(src,srcPos,"src"),uncoverObj(dst,dstPos,"dst"));
+            else{
+                //console.log("Uncover dst " + uncoverObj(dst,dstPos,"dst"));
+                result += uncoverObj(src,srcPos,"src") + uncoverObj(dst,dstPos,"dst");
+            }
         }
 
         else if (lit.relation === "leftof" || lit.relation === "rightof" || lit.relation === "beside")
-            result += Math.min(armAndUncover(src,srcPos), armAndUncover(dst,dstPos));
+            result += Math.min(armAndUncover(src,srcPos,"src"), armAndUncover(dst,dstPos,"dst"));
 
         else if (lit.relation === "above" || lit.relation === "under")
-            result += armAndUncover(src,srcPos) + uncoverObj(dst,dstPos);
+            result += armAndUncover(src,srcPos,"src") + uncoverObj(dst,dstPos,"dst");
 
-        console.log("H: "+result);
         return result;
 
         /* ------------- private functions ------------- */
@@ -399,7 +404,7 @@ module Planner {
         function findBestFloorPos() : Interpreter.Pos {
 
             // calculate the cost for each spot on the floor
-            let results = state.stacks.map((stack, x) => penalty(stack.length) + Math.abs(x - state.arm));
+            let results = state.stacks.map((stack, x) => dstPenalty(stack.length) + Math.abs(x - state.arm));
 
             // pick the index of the smallest value
             let pos = results.indexOf(Math.min.apply(Math,results));
