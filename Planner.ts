@@ -319,7 +319,11 @@ module Planner {
     }
 
 
+
+
     /* Manhattan distance */
+
+
     function manhattan (lit : Interpreter.Literal, state : State) : number {
 
         // If we are at goal return 0
@@ -337,7 +341,7 @@ module Planner {
             Interpreter.findPos(obj, state.stacks) : findBestFloorPos();
 
         // Penalty function used for heights
-        let penalty = (n :number) => n*n-n;
+        let penalty = (n :number) => n*n;
 
         // The length from arm to object
         let armToObj = (obj : string, pos : Interpreter.Pos) =>
@@ -356,14 +360,18 @@ module Planner {
         let srcPos = funPos(src);
 
         // If relation is holding we don't need destination
-        if (lit.relation === "holding")
-            return armAndUncover(src,srcPos);
+        if (lit.relation === "holding") {
+            let res = armAndUncover(src,srcPos);
+            console.log(res);
+            return res;
+        }
+
 
         // Find position for destination
         let dstPos = funPos(dst);
 
         // All the possible results want to know what the difference between src & dst is
-        let result :number = Math.abs(srcPos.x - dstPos.x);
+        let result :number = (srcPos.x < 0 || dstPos.x < 0) ? 0 : Math.abs(srcPos.x - dstPos.x);
 
         // Difference in Y and
         if (lit.relation === "inside" || lit.relation === "ontop") {
@@ -382,6 +390,7 @@ module Planner {
         else if (lit.relation === "above" || lit.relation === "under")
             result += armAndUncover(src,srcPos) + uncoverObj(dst,dstPos);
 
+        console.log("H: "+result);
         return result;
 
         /* ------------- private functions ------------- */

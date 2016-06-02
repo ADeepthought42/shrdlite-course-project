@@ -356,7 +356,7 @@ possible parse of the command. No need to change this one.
                 if (st[i][j] === obj)
                     return {x : i, y: j};
 
-        return {x : Number.MIN_VALUE, y: Number.MIN_VALUE};
+        return {x : -100, y: -100};
     }
 
 }
