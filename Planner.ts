@@ -318,9 +318,6 @@ module Planner {
         return interpret(algorithmResult);
     }
 
-
-
-
     /* Manhattan distance */
 
 
@@ -371,7 +368,6 @@ module Planner {
             console.log(res);
             return res;
         }
-
 
         // Find position for destination
         let dstPos = funPos(dst);
