@@ -344,7 +344,7 @@ module Planner {
         let srcPenalty = (n :number) => 5*n;
 
         // Penalty function used for heights
-        let dstPenalty = (n :number) => 4*n+1;
+        let dstPenalty = (n :number) => 4*n;
 
         let isZero = (n :number) => (n === 0) ? 0 : n-1;
 
@@ -353,10 +353,18 @@ module Planner {
             (obj === state.holding) ? 0 : Math.abs(state.arm - pos.x) ;
 
         // The cost of uncover a object
-        let uncoverObj = (obj : string, pos : Interpreter.Pos, str : string) =>
-            (obj === state.holding) ? 0 : ((str === "src") ?
-                srcPenalty(isZero(state.stacks[pos.x].length - pos.y)) :
-                    dstPenalty(isZero(state.stacks[pos.x].length - pos.y)));
+        let uncoverObj = (obj : string, pos : Interpreter.Pos, str : string) => {
+            if(obj === state.holding){
+                return 1;
+            }
+            else {
+                if(str === "src")
+                    return srcPenalty(isZero(state.stacks[pos.x].length - pos.y));
+                else
+                    return dstPenalty(isZero(state.stacks[pos.x].length - pos.y));
+            }
+            
+        }
 
         // Merged function for easy use
         let armAndUncover = (obj : string, pos : Interpreter.Pos, str : string) =>
@@ -395,8 +403,9 @@ module Planner {
         else if (lit.relation === "leftof" || lit.relation === "rightof" || lit.relation === "beside")
             result += Math.min(armAndUncover(src,srcPos,"src"), armAndUncover(dst,dstPos,"dst"));
 
-        else if (lit.relation === "above" || lit.relation === "under")
-            result += armAndUncover(src,srcPos,"src") + uncoverObj(dst,dstPos,"dst");
+        else if (lit.relation === "above" || lit.relation === "under"){
+            result += uncoverObj(src,srcPos,"src") + uncoverObj(dst,dstPos,"dst");
+        }
 
         return result;
 
