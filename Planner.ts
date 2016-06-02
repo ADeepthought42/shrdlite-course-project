@@ -344,7 +344,9 @@ module Planner {
         let srcPenalty = (n :number) => 5*n;
 
         // Penalty function used for heights
-        let dstPenalty = (n :number) => 5*n-n+1;
+        let dstPenalty = (n :number) => 4*n+1;
+
+        let isZero = (n :number) => (n === 0) ? 0 : n-1;
 
         // The length from arm to object
         let armToObj = (obj : string, pos : Interpreter.Pos) =>
@@ -353,8 +355,8 @@ module Planner {
         // The cost of uncover a object
         let uncoverObj = (obj : string, pos : Interpreter.Pos, str : string) =>
             (obj === state.holding) ? 0 : ((str === "src") ?
-                srcPenalty(state.stacks[pos.x].length - pos.y - 1 ) :
-                    dstPenalty(state.stacks[pos.x].length - pos.y - 1 ));
+                srcPenalty(isZero(state.stacks[pos.x].length - pos.y)) :
+                    dstPenalty(isZero(state.stacks[pos.x].length - pos.y)));
 
         // Merged function for easy use
         let armAndUncover = (obj : string, pos : Interpreter.Pos, str : string) =>
