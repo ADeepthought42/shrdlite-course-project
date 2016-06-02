@@ -183,7 +183,7 @@ possible parse of the command. No need to change this one.
                     let posString = "position "+ (pos.x+1) +" from the left wall and "+ (pos.y+1) +
                         " up from the floor.\n";
 
-                    returnString+= "\n\nNr: " + (i+1) +" of that object definition are at \n"+
+                    returnString+= "\n\nNr: " + (i+1) +" of that object definition is at \n"+
                                     posString + rightSide + leftSide + under + over;
             });
 
