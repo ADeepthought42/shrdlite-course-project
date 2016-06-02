@@ -212,7 +212,7 @@ possible parse of the command. No need to change this one.
 
             // Call for print function
             fun(returnString);
-            throw "What do you want to know now?";
+            throw "question";
         }
         else if (cmd.command === "put") {
 

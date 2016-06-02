@@ -80,6 +80,7 @@ module Shrdlite {
             }
         }
         catch(err) {
+            if(err === "question") return;
             world.printError("Interpretation error", err);
             return;
         }
