@@ -166,19 +166,19 @@ possible parse of the command. No need to change this one.
                     }
 
 
-                    let leftSide = "There are a "+((!left) ? (
-                        (pos.x <= 0) ? "wall " : "nothing directly " )  :
+                    let leftSide = "There is "+((!left) ? (
+                        (pos.x <= 0) ? "a wall " : "nothing directly " )  : "an " +
                         objectDefToStr(left))+"to the left.\n";
 
-                    let rightSide = "There are a "+((!right) ? (
-                        (pos.x >= state.stacks.length-1) ? "wall " : "nothing directly " ) :
+                    let rightSide = "There is "+((!right) ? (
+                        (pos.x >= state.stacks.length-1) ? "a wall " : "nothing directly " ) : "an " +
                         objectDefToStr(right))+"to the right.\n";
 
                     let under = (!below) ? "The floor is under it!\n" :
-                        "Direct under there is a "+objectDefToStr(below)+"way down is lava.\n";
+                        "Direct under there is an "+objectDefToStr(below)+"way down is lava.\n";
 
                     let over = (!upwards) ? "There is no object on it!\n" :
-                        "Ontop there is a "+objectDefToStr(upwards)+"way up is the sky.\n";
+                        "Ontop there is an "+objectDefToStr(upwards)+"way up is the sky.\n";
 
                     let posString = "position "+ (pos.x+1) +" from the left wall and "+ (pos.y+1) +
                         " up from the floor.\n";
