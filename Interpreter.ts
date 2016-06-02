@@ -133,37 +133,45 @@ possible parse of the command. No need to change this one.
         }
         else if (cmd.command === "where") {
 
+            // Select function depending on if we are using online or offline
             let fun : (s:string) => any = (typeof state.parent !== "undefined") ?
                 (x => {state.parent.printSystemOutput(x);}) : (x => {throw x;});
 
-            // Find source objects that match the entity
+            // If the object is floor
             if (cmd.entity.object.form === 'floor')
                 fun("The floor is under every object in this world");
 
+            // Find every object with definition
             srcObjs = findObjects(cmd.entity, state, true);
-            let whereStartText = "-------------"+'\n';
 
+            // Return string
             let returnString : string = "";
 
+            // For every source object
             srcObjs.forEach(
                 function(src,i,_) {
 
+                    // Is source equal to holding?
                     if (src === state.holding)
                         returnString += "\n\nNr: " + (i+1) + " is hold in the sky!\n"
                     else {
 
+                    // Find the position of the object
                     let pos : Pos = findPos(src,state.stacks);
 
+                    // Function that gets definition from position
                     let findObjDef = (x:number,y:number) =>
                         (!state.stacks[pos.x+x]) ? null:
                         state.objects[state.stacks[pos.x+x][pos.y+y]];
 
+                    // Find the definitions of the nearby objects
                     let left = findObjDef(-1,0);
                     let right = findObjDef(1,0);
                     let below = (pos.y <= 0) ? null : findObjDef(0,-1);
                     let upwards = (state.stacks[pos.x].length &&
                         pos.y >= state.stacks[pos.x].length-1) ? null : findObjDef(0,1);
 
+                    // Function that forms a string from objectdefinition
                     let objectDefToStr = (obj : ObjectDefinition) => {
                         let [form,size,color] = [obj.form,obj.size,obj.color]
                         let str :string = "object that has ";
@@ -174,29 +182,35 @@ possible parse of the command. No need to change this one.
                         return (!form && !size && !color) ? "" : str;
                     }
 
-
+                    // Formulate a string for leftside
                     let leftSide = "There is "+((!left) ? (
                         (pos.x <= 0) ? "a wall " : "nothing directly " )  : "an " +
                         objectDefToStr(left))+"to the left.\n";
 
+                    // Formulate a string for rightside
                     let rightSide = "There is "+((!right) ? (
                         (pos.x >= state.stacks.length-1) ? "a wall " : "nothing directly " ) : "an " +
                         objectDefToStr(right))+"to the right.\n";
 
+                    // Formulate a string for under the object
                     let under = (!below) ? "The floor is under it!\n" :
                         "Direct under there is an "+objectDefToStr(below)+"way down is lava.\n";
 
+                    // Formulate a string for over the object
                     let over = (!upwards) ? "There is no object on it!\n" :
                         "Ontop there is an "+objectDefToStr(upwards)+"way up is the sky.\n";
 
+                    // Formulate a string for the position of the object
                     let posString = "position "+ (pos.x+1) +" from the left wall and "+ (pos.y+1) +
                         " up from the floor.\n";
 
+                    // Add strings to resultstring
                     returnString+= "\n\nNr: " + (i+1) +" of that object definition is at \n"+
                                     posString + rightSide + leftSide + under + over;
                     }
             });
 
+            // Call for print function
             fun(returnString);
             throw "What do you want to know now?";
         }
@@ -418,8 +432,7 @@ possible parse of the command. No need to change this one.
 
     /*
         Function that find the position of object in the world,
-        if they do not exist it resturns Number.MIN_VALUE in
-        both x and y.
+        if they do not exist it resturns -100 in both x and y.
     */
     export function findPos(obj : string, st : Stack[] ) : Pos {
         for(let i : number = 0; i < st.length ; i++)
